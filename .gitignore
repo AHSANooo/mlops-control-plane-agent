@@ -3,8 +3,6 @@ Assignment_03_MLOps_AI_Agent_Complete.pdf
 *.pdf
 
 # Environment and secrets
-.env
-.env.local
 *.key
 *.pem
 
@@ -67,8 +65,9 @@ data/*.parquet
 /tmp/dvc-storage/
 
 # IDE and dump files
-.vscode/
 .idea/
 *.swp
 *.swo
 repo_dump*.txt
+config.bat
+node_modules

@@ -1,14 +1,14 @@
 {
   "scenario": "Best Model & Production Readiness Audit",
   "agent_query": "What is our best-performing model, and is it ready for production?",
-  "agent_response": "### Operational MLOps Status Assessment\n\n**Overview:** Evaluated live infrastructure across MLflow, DVC, Airflow, and Kubernetes.\n\n**Known Facts:**\n- MLflow best run is '11f2acae1ae0460aaccd4856492acfa8' with F1=0.49454545454545457 using dataset version 'v2.0' (DVC hash: 55a2a6ac70acd49a6fae9efbbf3e2fa3).\n- Current repository dataset reference is 'untagged' (Git commit: 933565b, DVC hash: 55a2a6ac70acd49a6fae9efbbf3e2fa3).\n- Kubernetes deployment 'model-inference' in namespace 'mlops-prod' is running image 'mlops-inference:v1.0' (model_version: 'v1.0', MLflow run ID: 'run-v1-prod').\n- Latest Airflow pipeline run 'manual__2026-11-15T16:45:12.133883+00:00' finished with state 'failed'.\n- Airflow task 'validate_dataset' failed during execution of pipeline run 'manual__2026-11-15T16:45:12.133883+00:00'.\n- Downstream Airflow tasks ['preprocess_data', 'train_model', 'evaluate_and_log_mlflow', 'apply_model_quality_gate'] were aborted due to upstream failure.\n\n**Recommended Actions:**\n- Model promotion recommendation: Best MLflow run '11f2acae1ae0460aaccd4856492acfa8' is not yet deployed to Kubernetes (currently running 'run-v1-prod'). Roll out updated model image rather than retraining.\n- Retraining recommendation: Retraining is warranted because: New dataset version (v2.0) contains hash modifications not fully benchmarked.. Confirm with 'user_confirmed=True' before initiating pipeline trigger.\n- Do not trigger automatic retraining without operational review and user confirmation.",
+  "agent_response": "### Operational MLOps Status Assessment\n\n**Overview:** Evaluated live infrastructure across MLflow, DVC, Airflow, and Kubernetes.\n\n**Known Facts:**\n- MLflow best run is '11f2acae1ae0460aaccd4856492acfa8' with F1=0.49454545454545457 using dataset version 'v2.0' (DVC hash: 55a2a6ac70acd49a6fae9efbbf3e2fa3).\n- Current repository dataset reference is 'untagged' (Git commit: 06213d1, DVC hash: 55a2a6ac70acd49a6fae9efbbf3e2fa3).\n- Kubernetes deployment 'model-inference' in namespace 'mlops-prod' is running image 'mlops-inference:v1.0' (model_version: 'v1.0', MLflow run ID: 'run-v1-prod').\n- Latest Airflow pipeline run 'manual__2026-11-15T17:04:20.261698+00:00' finished with state 'failed'.\n- Airflow task 'validate_dataset' failed during execution of pipeline run 'manual__2026-11-15T17:04:20.261698+00:00'.\n- Downstream tasks skipped due to upstream failure: preprocess_data, train_model, evaluate_and_log_mlflow, apply_model_quality_gate.\n\n**Recommended Actions:**\n- Model promotion recommendation: Best MLflow run '11f2acae1ae0460aaccd4856492acfa8' is not yet deployed to Kubernetes (currently running 'run-v1-prod'). Roll out updated model image rather than retraining.\n- Retraining recommendation: Retraining is warranted because: New dataset version (v2.0) contains hash modifications not fully benchmarked.. Confirm with 'user_confirmed=True' before initiating pipeline trigger.\n- Do not trigger automatic retraining without operational review and user confirmation.",
   "known_facts": [
     "MLflow best run is '11f2acae1ae0460aaccd4856492acfa8' with F1=0.49454545454545457 using dataset version 'v2.0' (DVC hash: 55a2a6ac70acd49a6fae9efbbf3e2fa3).",
-    "Current repository dataset reference is 'untagged' (Git commit: 933565b, DVC hash: 55a2a6ac70acd49a6fae9efbbf3e2fa3).",
+    "Current repository dataset reference is 'untagged' (Git commit: 06213d1, DVC hash: 55a2a6ac70acd49a6fae9efbbf3e2fa3).",
     "Kubernetes deployment 'model-inference' in namespace 'mlops-prod' is running image 'mlops-inference:v1.0' (model_version: 'v1.0', MLflow run ID: 'run-v1-prod').",
-    "Latest Airflow pipeline run 'manual__2026-11-15T16:45:12.133883+00:00' finished with state 'failed'.",
-    "Airflow task 'validate_dataset' failed during execution of pipeline run 'manual__2026-11-15T16:45:12.133883+00:00'.",
-    "Downstream Airflow tasks ['preprocess_data', 'train_model', 'evaluate_and_log_mlflow', 'apply_model_quality_gate'] were aborted due to upstream failure."
+    "Latest Airflow pipeline run 'manual__2026-11-15T17:04:20.261698+00:00' finished with state 'failed'.",
+    "Airflow task 'validate_dataset' failed during execution of pipeline run 'manual__2026-11-15T17:04:20.261698+00:00'.",
+    "Downstream tasks skipped due to upstream failure: preprocess_data, train_model, evaluate_and_log_mlflow, apply_model_quality_gate."
   ],
   "uncertainties": [],
   "recommended_actions": [
@@ -42,7 +42,7 @@
         "dvc_data_hash": "55a2a6ac70acd49a6fae9efbbf3e2fa3",
         "git_commit": "e83c7b2"
       },
-      "timestamp": "2026-11-15T16:46:18.424402+00:00"
+      "timestamp": "2026-11-15T17:05:30.928461+00:00"
     },
     {
       "source": "MLflow Registry",
@@ -77,20 +77,20 @@
         ],
         "count": 3
       },
-      "timestamp": "2026-11-15T16:46:18.593604+00:00"
+      "timestamp": "2026-11-15T17:05:31.029790+00:00"
     },
     {
       "source": "DVC",
       "summary": "Tracked dataset Git commit and DVC md5 hash",
       "details": {
         "git_reference": "HEAD",
-        "git_commit": "933565b",
+        "git_commit": "06213d1",
         "git_tag": "untagged",
         "dvc_file": "data/dataset.csv.dvc",
         "dvc_data_hash": "55a2a6ac70acd49a6fae9efbbf3e2fa3",
         "size_bytes": 136451
       },
-      "timestamp": "2026-11-15T16:46:18.845409+00:00"
+      "timestamp": "2026-11-15T17:05:31.394294+00:00"
     },
     {
       "source": "DVC Diff",
@@ -115,7 +115,7 @@
         "raw_git_diff": "diff --git a/data/dataset.csv.dvc b/data/dataset.csv.dvc\nindex ee4cc59..846d669 100644\n--- a/data/dataset.csv.dvc\n+++ b/data/dataset.csv.dvc\n@@ -1,6 +1,6 @@\n outs:\n-- md5: 6afc194079c45accc3e7b9aacdb6bafa\n-  size: 109743\n+- md5: 55a2a6ac70acd49a6fae9efbbf3e2fa3\n+  size: 136451\n   isexec: true\n   hash: md5\n   path: dataset.csv",
         "hash_changed": true
       },
-      "timestamp": "2026-11-15T16:46:19.438126+00:00"
+      "timestamp": "2026-11-15T17:05:32.690988+00:00"
     },
     {
       "source": "Kubernetes",
@@ -128,7 +128,7 @@
         "mlflow_run_id": "run-v1-prod",
         "service_name": "churn-inference-service"
       },
-      "timestamp": "2026-11-15T16:46:19.470243+00:00"
+      "timestamp": "2026-11-15T17:05:32.721015+00:00"
     },
     {
       "source": "Kubernetes Diagnostics",
@@ -137,8 +137,50 @@
         "namespace": "mlops-prod",
         "unhealthy_pods_count": 0,
         "unhealthy_pods": [],
-        "warning_events_count": 6,
+        "warning_events_count": 12,
         "warning_events": [
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Failed to pull image \"mlops-inference:broken-tag\": failed to pull and unpack image \"docker.io/library/mlops-inference:broken-tag\": failed to resolve reference \"docker.io/library/mlops-inference:broken-tag\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed",
+            "object": "model-inference-6b6f4f6c48-6xjpg",
+            "last_timestamp": "2026-11-15 17:03:11+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ErrImagePull",
+            "object": "model-inference-6b6f4f6c48-6xjpg",
+            "last_timestamp": "2026-11-15 17:03:11+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ImagePullBackOff",
+            "object": "model-inference-6b6f4f6c48-6xjpg",
+            "last_timestamp": "2026-11-15 17:02:58+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Failed to pull image \"mlops-inference:broken-tag\": failed to pull and unpack image \"docker.io/library/mlops-inference:broken-tag\": failed to resolve reference \"docker.io/library/mlops-inference:broken-tag\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed",
+            "object": "model-inference-6b6f4f6c48-86bkf",
+            "last_timestamp": "2026-11-15 17:05:01+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ErrImagePull",
+            "object": "model-inference-6b6f4f6c48-86bkf",
+            "last_timestamp": "2026-11-15 17:05:01+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ImagePullBackOff",
+            "object": "model-inference-6b6f4f6c48-86bkf",
+            "last_timestamp": "2026-11-15 17:05:02+00:00"
+          },
           {
             "type": "Warning",
             "reason": "Failed",
@@ -183,7 +225,7 @@
           }
         ]
       },
-      "timestamp": "2026-11-15T16:46:19.494876+00:00"
+      "timestamp": "2026-11-15T17:05:32.753129+00:00"
     },
     {
       "source": "Airflow",
@@ -192,42 +234,42 @@
         "dag_id": "churn_model_training_pipeline",
         "runs": [
           {
+            "dag_run_id": "manual__2026-11-15T17:04:20.261698+00:00",
+            "state": "failed",
+            "start_date": "2026-11-15T17:04:21.533876Z",
+            "end_date": "2026-11-15T17:04:54.462394Z",
+            "run_type": "manual"
+          },
+          {
+            "dag_run_id": "manual__2026-11-15T17:02:20.821747+00:00",
+            "state": "failed",
+            "start_date": "2026-11-15T17:02:21.817874Z",
+            "end_date": "2026-11-15T17:02:52.871146Z",
+            "run_type": "manual"
+          },
+          {
             "dag_run_id": "manual__2026-11-15T16:45:12.133883+00:00",
             "state": "failed",
             "start_date": "2026-11-15T16:45:13.598242Z",
             "end_date": "2026-11-15T16:45:40.954417Z",
             "run_type": "manual"
-          },
-          {
-            "dag_run_id": "manual__2026-11-15T16:25:04.120424+00:00",
-            "state": "failed",
-            "start_date": "2026-11-15T16:25:06.028843Z",
-            "end_date": "2026-11-15T16:25:33.661058Z",
-            "run_type": "manual"
-          },
-          {
-            "dag_run_id": "manual__2026-11-15T14:38:15.966620+00:00",
-            "state": "failed",
-            "start_date": "2026-11-15T14:38:16.693081Z",
-            "end_date": "2026-11-15T14:38:44.773003Z",
-            "run_type": "manual"
           }
         ],
         "count": 3
       },
-      "timestamp": "2026-11-15T16:46:19.596018+00:00"
+      "timestamp": "2026-11-15T17:05:32.890666+00:00"
     },
     {
       "source": "Airflow Logs",
       "summary": "Failure logs for task 'validate_dataset'",
       "details": {
         "dag_id": "churn_model_training_pipeline",
-        "dag_run_id": "manual__2026-11-15T16:45:12.133883+00:00",
+        "dag_run_id": "manual__2026-11-15T17:04:20.261698+00:00",
         "task_id": "validate_dataset",
-        "try_number": 1,
-        "log_snippet": "{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"/opt/airflow/logs/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:45:12.133883+00:00/task_id=validate_dataset/attempt=1.log\"]},{\"event\":\"::endgroup::\"},{\"timestamp\":\"2026-11-15T16:45:13.870286Z\",\"event\":\"DAG bundles loaded: dags-folder\",\"level\":\"info\",\"logger\":\"airflow.dag_processing.bundles.manager.DagBundlesManager\"},{\"timestamp\":\"2026-11-15T16:45:13.871322Z\",\"event\":\"Filling up the DagBag from /opt/airflow/dags/training_pipeline.py\",\"level\":\"info\",\"logger\":\"airflow.models.dagbag.DagBag\"},{\"timestamp\":\"2026-11-15T16:45:14.817961Z\",\"event\":\"Task failed with exception\",\"level\":\"error\",\"logger\":\"task\",\"error_detail\":[{\"exc_type\":\"ValueError\",\"exc_value\":\"Dataset validation failed: Maximum null ratio 40.75% exceeds limit 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}\",\"exc_notes\":[],\"syntax_error\":null,\"is_cause\":false,\"frames\":[{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":825,\"name\":\"run\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":1088,\"name\":\"_execute_task\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/decorator.py\",\"lineno\":251,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":212,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":235,\"name\":\"execute_callable\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/callback_runner.py\",\"lineno\":81,\"name\":\"run\"},{\"filename\":\"/opt/airflow/dags/training_pipeline.py\",\"lineno\":72,\"name\":\"task_validate_dataset\"}]}]}],\"continuation_token\":null}"
+        "try_number": 3,
+        "log_snippet": "{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"/opt/airflow/logs/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T17:04:20.261698+00:00/task_id=validate_dataset/attempt=3.log\"]},{\"event\":\"::endgroup::\"},{\"timestamp\":\"2026-11-15T17:04:48.925828Z\",\"event\":\"DAG bundles loaded: dags-folder\",\"level\":\"info\",\"logger\":\"airflow.dag_processing.bundles.manager.DagBundlesManager\"},{\"timestamp\":\"2026-11-15T17:04:48.936231Z\",\"event\":\"Filling up the DagBag from /opt/airflow/dags/training_pipeline.py\",\"level\":\"info\",\"logger\":\"airflow.models.dagbag.DagBag\"},{\"timestamp\":\"2026-11-15T17:04:49.902566Z\",\"event\":\"Task failed with exception\",\"level\":\"error\",\"logger\":\"task\",\"error_detail\":[{\"exc_type\":\"ValueError\",\"exc_value\":\"Dataset validation failed: Maximum null ratio 40.75% exceeds limit 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}\",\"exc_notes\":[],\"syntax_error\":null,\"is_cause\":false,\"frames\":[{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":825,\"name\":\"run\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":1088,\"name\":\"_execute_task\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/decorator.py\",\"lineno\":251,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":212,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":235,\"name\":\"execute_callable\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/callback_runner.py\",\"lineno\":81,\"name\":\"run\"},{\"filename\":\"/opt/airflow/dags/training_pipeline.py\",\"lineno\":72,\"name\":\"task_validate_dataset\"}]}]}],\"continuation_token\":null}"
       },
-      "timestamp": "2026-11-15T16:46:19.780563+00:00"
+      "timestamp": "2026-11-15T17:05:33.124743+00:00"
     }
   ]
 }

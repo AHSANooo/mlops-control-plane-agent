@@ -1,7 +1,7 @@
 {
   "scenario": "Kubernetes Infrastructure Failure Injection",
   "agent_query": "Why is my prediction API degraded?",
-  "agent_response": "### Diagnosis: Prediction API Degraded\n\n**Identified Cause:** Kubernetes pods in `mlops-prod` are in an unhealthy state:\nmodel-inference-6b6f4f6c48-9xdn4: Phase is Pending, Waiting reason: ImagePullBackOff (Back-off pulling image \"mlops-inference:broken-tag\")\n\n**Recommended Recovery:** Roll back the broken image deployment via `kubectl rollout undo deployment/model-inference -n mlops-prod`.",
+  "agent_response": "### Diagnosis: Prediction API Degraded\n\n**Identified Cause:** Kubernetes pods in `mlops-prod` are in an unhealthy state:\nmodel-inference-6b6f4f6c48-86bkf: Phase is Pending, Waiting reason: ErrImagePull (failed to pull and unpack image \"docker.io/library/mlops-inference:broken-tag\": failed to resolve reference \"docker.io/library/mlops-inference:broken-tag\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed)\n\n**Recommended Recovery:** Roll back the broken image deployment via `kubectl rollout undo deployment/model-inference -n mlops-prod`.",
   "known_facts": [
     "Kubernetes deployment 'model-inference' in namespace 'mlops-prod' is running image 'mlops-inference:broken-tag' (model_version: 'v1.0', MLflow run ID: 'run-v1-prod')."
   ],
@@ -19,7 +19,7 @@
         "mlflow_run_id": "run-v1-prod",
         "service_name": "churn-inference-service"
       },
-      "timestamp": "2026-11-15T16:46:01.422487+00:00"
+      "timestamp": "2026-11-15T17:05:15.407113+00:00"
     },
     {
       "source": "Kubernetes Diagnostics",
@@ -29,16 +29,58 @@
         "unhealthy_pods_count": 1,
         "unhealthy_pods": [
           {
-            "pod_name": "model-inference-6b6f4f6c48-9xdn4",
+            "pod_name": "model-inference-6b6f4f6c48-86bkf",
             "phase": "Pending",
             "reasons": [
               "Phase is Pending",
-              "Waiting reason: ImagePullBackOff (Back-off pulling image \"mlops-inference:broken-tag\")"
+              "Waiting reason: ErrImagePull (failed to pull and unpack image \"docker.io/library/mlops-inference:broken-tag\": failed to resolve reference \"docker.io/library/mlops-inference:broken-tag\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed)"
             ]
           }
         ],
-        "warning_events_count": 6,
+        "warning_events_count": 12,
         "warning_events": [
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Failed to pull image \"mlops-inference:broken-tag\": failed to pull and unpack image \"docker.io/library/mlops-inference:broken-tag\": failed to resolve reference \"docker.io/library/mlops-inference:broken-tag\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed",
+            "object": "model-inference-6b6f4f6c48-6xjpg",
+            "last_timestamp": "2026-11-15 17:03:11+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ErrImagePull",
+            "object": "model-inference-6b6f4f6c48-6xjpg",
+            "last_timestamp": "2026-11-15 17:03:11+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ImagePullBackOff",
+            "object": "model-inference-6b6f4f6c48-6xjpg",
+            "last_timestamp": "2026-11-15 17:02:58+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Failed to pull image \"mlops-inference:broken-tag\": failed to pull and unpack image \"docker.io/library/mlops-inference:broken-tag\": failed to resolve reference \"docker.io/library/mlops-inference:broken-tag\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed",
+            "object": "model-inference-6b6f4f6c48-86bkf",
+            "last_timestamp": "2026-11-15 17:05:01+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ErrImagePull",
+            "object": "model-inference-6b6f4f6c48-86bkf",
+            "last_timestamp": "2026-11-15 17:05:01+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ImagePullBackOff",
+            "object": "model-inference-6b6f4f6c48-86bkf",
+            "last_timestamp": "2026-11-15 17:05:02+00:00"
+          },
           {
             "type": "Warning",
             "reason": "Failed",
@@ -83,7 +125,7 @@
           }
         ]
       },
-      "timestamp": "2026-11-15T16:46:01.446653+00:00"
+      "timestamp": "2026-11-15T17:05:15.438362+00:00"
     }
   ]
 }

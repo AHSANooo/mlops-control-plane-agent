@@ -38,6 +38,57 @@ Detailed empirical evaluation and failure injection logs are documented in [eval
 
 ---
 
+## System Architecture
+
+```mermaid
+flowchart TB
+    subgraph Clients["Clients & SRE Teams"]
+        ENG["MLOps Engineer / SRE"]
+        AUTO["Automation & CI/CD Pipelines"]
+    end
+
+    subgraph Gateway["FastAPI Control Plane Gateway"]
+        API["FastAPI REST Interface\nPOST /api/v1/chat\nGET /health"]
+    end
+
+    subgraph Agent["MLOps Agent Orchestrator"]
+        ORCH["Reasoning Orchestrator\n(Grounded Multi-Tool Planner)"]
+        GUARD["Safety & RBAC Guardrails\n- namespace: mlops-prod\n- user_confirmed=True"]
+        TELEM["Structured Telemetry\n- request_id & duration_ms\n- Secret Redaction"]
+    end
+
+    subgraph ToolModules["Tool Modules (Pydantic V2 Schemas & ToolResult)"]
+        DVC_T["DVC Tools\n(Lineage & Hashes)"]
+        MLF_T["MLflow Tools\n(Runs, Metrics & Models)"]
+        AIR_T["Airflow 3 Tools\n(DAGs, Runs & Error Logs)"]
+        K8S_T["Kubernetes Tools\n(Pods, Probes & Rollouts)"]
+    end
+
+    subgraph Backends["Infrastructure & Operational Backends"]
+        DVC_B[("Git & DVC Storage\nLocal & Remote")]
+        MLF_B[("MLflow Server\nhttp://localhost:5000")]
+        AIR_B[("Airflow 3 Webserver\nhttp://localhost:8080")]
+        K8S_B[("Kubernetes kind Cluster\nns: mlops-prod")]
+    end
+
+    ENG --> API
+    AUTO --> API
+    API --> ORCH
+    ORCH --- GUARD
+    ORCH --- TELEM
+    ORCH --> DVC_T
+    ORCH --> MLF_T
+    ORCH --> AIR_T
+    ORCH --> K8S_T
+
+    DVC_T --> DVC_B
+    MLF_T --> MLF_B
+    AIR_T --> AIR_B
+    K8S_T --> K8S_B
+```
+
+---
+
 ## Repository Structure
 
 ```text
