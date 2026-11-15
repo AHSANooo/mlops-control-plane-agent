@@ -2,6 +2,7 @@
 
 import json
 import subprocess
+import sys
 import time
 from pathlib import Path
 
@@ -14,8 +15,11 @@ REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def run_cmd(cmd: list[str]) -> subprocess.CompletedProcess[str]:
-    print(f"Running: {' '.join(cmd)}")
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    actual_cmd = list(cmd)
+    if actual_cmd and actual_cmd[0] == "python":
+        actual_cmd[0] = sys.executable
+    print(f"Running: {' '.join(actual_cmd)}")
+    proc = subprocess.run(actual_cmd, capture_output=True, text=True, check=False)
     if proc.stderr:
         print(f"STDERR: {proc.stderr.strip()}")
     return proc

@@ -3,14 +3,11 @@
   "validation_failure_detected": true,
   "validation_output": "Traceback (most recent call last):\n  File \"/mnt/d/Uni/MLOps/Assignment03/training/validate.py\", line 76, in <module>\n    main()\n  File \"/mnt/d/Uni/MLOps/Assignment03/training/validate.py\", line 72, in main\n    validate_dataset(args.config)\n  File \"/mnt/d/Uni/MLOps/Assignment03/training/validate.py\", line 48, in validate_dataset\n    raise ValueError(\nValueError: Validation failed: Maximum column null ratio 40.75% exceeds allowed threshold of 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}\n",
   "agent_query": "Why did the latest training pipeline fail?",
-  "agent_response": "### Diagnosis: Training Pipeline Failure\n\n**Identified Cause:** The latest Airflow training pipeline failed during execution.\n\n**Task Diagnostic:** Task `preprocess_data` failed with error:\n```\noup::Log message source details\",\"sources\":[\"Could not read served logs: Invalid URL 'http://:8793/log/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=preprocess_data/attempt=1.log': No host supplied\"]},{\"event\":\"::endgroup::\"}],\"continuation_token\":null}\n```\n\n**Task Diagnostic:** Task `train_model` failed with error:\n```\n::group::Log message source details\",\"sources\":[\"Could not read served logs: Invalid URL 'http://:8793/log/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=train_model/attempt=1.log': No host supplied\"]},{\"event\":\"::endgroup::\"}],\"continuation_token\":null}\n```\n\n**Task Diagnostic:** Task `evaluate_and_log_mlflow` failed with error:\n```\n message source details\",\"sources\":[\"Could not read served logs: Invalid URL 'http://:8793/log/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=evaluate_and_log_mlflow/attempt=1.log': No host supplied\"]},{\"event\":\"::endgroup::\"}],\"continuation_token\":null}\n```\n\n**Task Diagnostic:** Task `apply_model_quality_gate` failed with error:\n```\nmessage source details\",\"sources\":[\"Could not read served logs: Invalid URL 'http://:8793/log/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=apply_model_quality_gate/attempt=1.log': No host supplied\"]},{\"event\":\"::endgroup::\"}],\"continuation_token\":null}\n```\n\n**Task Diagnostic:** Task `validate_dataset` failed with error:\n```\n{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"/opt/airflow/logs/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=validate_dataset/attempt=1.log\"]},{\"event\":\"::endgroup::\"},{\"timestamp\":\"2026-11-15T16:25:06.548242Z\",\"event\":\"DAG bundles loaded: dags-folder\",\"level\":\"info\",\"logger\":\"airflow.dag_processing.bundles.manager.DagBundlesManager\"},{\"timestamp\":\"2026-11-15T16:25:06.550587Z\",\"event\":\"Filling up the DagBag from /opt/airflow/dags/training_pipeline.py\",\"level\":\"info\",\"logger\":\"airflow.models.dagbag.DagBag\"},{\"timestamp\":\"2026-11-15T16:25:07.941959Z\",\"event\":\"Task failed with exception\",\"level\":\"error\",\"logger\":\"task\",\"error_detail\":[{\"exc_type\":\"ValueError\",\"exc_value\":\"Dataset validation failed: Maximum null ratio 40.75% exceeds limit 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}\",\"exc_notes\":[],\"syntax_error\":null,\"is_cause\":false,\"frames\":[{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":825,\"name\":\"run\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":1088,\"name\":\"_execute_task\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/decorator.py\",\"lineno\":251,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":212,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":235,\"name\":\"execute_callable\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/callback_runner.py\",\"lineno\":81,\"name\":\"run\"},{\"filename\":\"/opt/airflow/dags/training_pipeline.py\",\"lineno\":72,\"name\":\"task_validate_dataset\"}]}]}],\"continuation_token\":null}\n```\n",
+  "agent_response": "### Diagnosis: Training Pipeline Failure\n\n**Identified Cause:** The latest Airflow training pipeline failed during execution.\n\n**Task Diagnostic:** Task `validate_dataset` failed with error:\n```\n{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"/opt/airflow/logs/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:45:12.133883+00:00/task_id=validate_dataset/attempt=1.log\"]},{\"event\":\"::endgroup::\"},{\"timestamp\":\"2026-11-15T16:45:13.870286Z\",\"event\":\"DAG bundles loaded: dags-folder\",\"level\":\"info\",\"logger\":\"airflow.dag_processing.bundles.manager.DagBundlesManager\"},{\"timestamp\":\"2026-11-15T16:45:13.871322Z\",\"event\":\"Filling up the DagBag from /opt/airflow/dags/training_pipeline.py\",\"level\":\"info\",\"logger\":\"airflow.models.dagbag.DagBag\"},{\"timestamp\":\"2026-11-15T16:45:14.817961Z\",\"event\":\"Task failed with exception\",\"level\":\"error\",\"logger\":\"task\",\"error_detail\":[{\"exc_type\":\"ValueError\",\"exc_value\":\"Dataset validation failed: Maximum null ratio 40.75% exceeds limit 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}\",\"exc_notes\":[],\"syntax_error\":null,\"is_cause\":false,\"frames\":[{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":825,\"name\":\"run\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":1088,\"name\":\"_execute_task\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/decorator.py\",\"lineno\":251,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":212,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":235,\"name\":\"execute_callable\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/callback_runner.py\",\"lineno\":81,\"name\":\"run\"},{\"filename\":\"/opt/airflow/dags/training_pipeline.py\",\"lineno\":72,\"name\":\"task_validate_dataset\"}]}]}],\"continuation_token\":null}\n```\n",
   "known_facts": [
-    "Latest Airflow pipeline run 'manual__2026-11-15T16:25:04.120424+00:00' finished with state 'failed'.",
-    "Airflow task 'preprocess_data' failed during execution of pipeline run 'manual__2026-11-15T16:25:04.120424+00:00'.",
-    "Airflow task 'train_model' failed during execution of pipeline run 'manual__2026-11-15T16:25:04.120424+00:00'.",
-    "Airflow task 'evaluate_and_log_mlflow' failed during execution of pipeline run 'manual__2026-11-15T16:25:04.120424+00:00'.",
-    "Airflow task 'apply_model_quality_gate' failed during execution of pipeline run 'manual__2026-11-15T16:25:04.120424+00:00'.",
-    "Airflow task 'validate_dataset' failed during execution of pipeline run 'manual__2026-11-15T16:25:04.120424+00:00'."
+    "Latest Airflow pipeline run 'manual__2026-11-15T16:45:12.133883+00:00' finished with state 'failed'.",
+    "Airflow task 'validate_dataset' failed during execution of pipeline run 'manual__2026-11-15T16:45:12.133883+00:00'.",
+    "Downstream Airflow tasks ['preprocess_data', 'train_model', 'evaluate_and_log_mlflow', 'apply_model_quality_gate'] were aborted due to upstream failure."
   ],
   "uncertainties": [],
   "recommended_actions": [],
@@ -21,6 +18,13 @@
       "details": {
         "dag_id": "churn_model_training_pipeline",
         "runs": [
+          {
+            "dag_run_id": "manual__2026-11-15T16:45:12.133883+00:00",
+            "state": "failed",
+            "start_date": "2026-11-15T16:45:13.598242Z",
+            "end_date": "2026-11-15T16:45:40.954417Z",
+            "run_type": "manual"
+          },
           {
             "dag_run_id": "manual__2026-11-15T16:25:04.120424+00:00",
             "state": "failed",
@@ -34,78 +38,23 @@
             "start_date": "2026-11-15T14:38:16.693081Z",
             "end_date": "2026-11-15T14:38:44.773003Z",
             "run_type": "manual"
-          },
-          {
-            "dag_run_id": "manual__2026-11-15T14:36:21.495421+00:00",
-            "state": "failed",
-            "start_date": "2026-11-15T14:36:22.075482Z",
-            "end_date": "2026-11-15T14:37:20.241583Z",
-            "run_type": "manual"
           }
         ],
         "count": 3
       },
-      "timestamp": "2026-11-15T16:25:35.047563+00:00"
-    },
-    {
-      "source": "Airflow Logs",
-      "summary": "Failure logs for task 'preprocess_data'",
-      "details": {
-        "dag_id": "churn_model_training_pipeline",
-        "dag_run_id": "manual__2026-11-15T16:25:04.120424+00:00",
-        "task_id": "preprocess_data",
-        "try_number": 1,
-        "log_snippet": "{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"Could not read served logs: Invalid URL 'http://:8793/log/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=preprocess_data/attempt=1.log': No host supplied\"]},{\"event\":\"::endgroup::\"}],\"continuation_token\":null}"
-      },
-      "timestamp": "2026-11-15T16:25:35.413857+00:00"
-    },
-    {
-      "source": "Airflow Logs",
-      "summary": "Failure logs for task 'train_model'",
-      "details": {
-        "dag_id": "churn_model_training_pipeline",
-        "dag_run_id": "manual__2026-11-15T16:25:04.120424+00:00",
-        "task_id": "train_model",
-        "try_number": 1,
-        "log_snippet": "{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"Could not read served logs: Invalid URL 'http://:8793/log/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=train_model/attempt=1.log': No host supplied\"]},{\"event\":\"::endgroup::\"}],\"continuation_token\":null}"
-      },
-      "timestamp": "2026-11-15T16:25:35.512432+00:00"
-    },
-    {
-      "source": "Airflow Logs",
-      "summary": "Failure logs for task 'evaluate_and_log_mlflow'",
-      "details": {
-        "dag_id": "churn_model_training_pipeline",
-        "dag_run_id": "manual__2026-11-15T16:25:04.120424+00:00",
-        "task_id": "evaluate_and_log_mlflow",
-        "try_number": 1,
-        "log_snippet": "{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"Could not read served logs: Invalid URL 'http://:8793/log/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=evaluate_and_log_mlflow/attempt=1.log': No host supplied\"]},{\"event\":\"::endgroup::\"}],\"continuation_token\":null}"
-      },
-      "timestamp": "2026-11-15T16:25:35.604286+00:00"
-    },
-    {
-      "source": "Airflow Logs",
-      "summary": "Failure logs for task 'apply_model_quality_gate'",
-      "details": {
-        "dag_id": "churn_model_training_pipeline",
-        "dag_run_id": "manual__2026-11-15T16:25:04.120424+00:00",
-        "task_id": "apply_model_quality_gate",
-        "try_number": 1,
-        "log_snippet": "{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"Could not read served logs: Invalid URL 'http://:8793/log/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=apply_model_quality_gate/attempt=1.log': No host supplied\"]},{\"event\":\"::endgroup::\"}],\"continuation_token\":null}"
-      },
-      "timestamp": "2026-11-15T16:25:35.689284+00:00"
+      "timestamp": "2026-11-15T16:45:43.093303+00:00"
     },
     {
       "source": "Airflow Logs",
       "summary": "Failure logs for task 'validate_dataset'",
       "details": {
         "dag_id": "churn_model_training_pipeline",
-        "dag_run_id": "manual__2026-11-15T16:25:04.120424+00:00",
+        "dag_run_id": "manual__2026-11-15T16:45:12.133883+00:00",
         "task_id": "validate_dataset",
         "try_number": 1,
-        "log_snippet": "{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"/opt/airflow/logs/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:25:04.120424+00:00/task_id=validate_dataset/attempt=1.log\"]},{\"event\":\"::endgroup::\"},{\"timestamp\":\"2026-11-15T16:25:06.548242Z\",\"event\":\"DAG bundles loaded: dags-folder\",\"level\":\"info\",\"logger\":\"airflow.dag_processing.bundles.manager.DagBundlesManager\"},{\"timestamp\":\"2026-11-15T16:25:06.550587Z\",\"event\":\"Filling up the DagBag from /opt/airflow/dags/training_pipeline.py\",\"level\":\"info\",\"logger\":\"airflow.models.dagbag.DagBag\"},{\"timestamp\":\"2026-11-15T16:25:07.941959Z\",\"event\":\"Task failed with exception\",\"level\":\"error\",\"logger\":\"task\",\"error_detail\":[{\"exc_type\":\"ValueError\",\"exc_value\":\"Dataset validation failed: Maximum null ratio 40.75% exceeds limit 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}\",\"exc_notes\":[],\"syntax_error\":null,\"is_cause\":false,\"frames\":[{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":825,\"name\":\"run\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":1088,\"name\":\"_execute_task\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/decorator.py\",\"lineno\":251,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":212,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":235,\"name\":\"execute_callable\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/callback_runner.py\",\"lineno\":81,\"name\":\"run\"},{\"filename\":\"/opt/airflow/dags/training_pipeline.py\",\"lineno\":72,\"name\":\"task_validate_dataset\"}]}]}],\"continuation_token\":null}"
+        "log_snippet": "{\"content\":[{\"event\":\"::group::Log message source details\",\"sources\":[\"/opt/airflow/logs/dag_id=churn_model_training_pipeline/run_id=manual__2026-11-15T16:45:12.133883+00:00/task_id=validate_dataset/attempt=1.log\"]},{\"event\":\"::endgroup::\"},{\"timestamp\":\"2026-11-15T16:45:13.870286Z\",\"event\":\"DAG bundles loaded: dags-folder\",\"level\":\"info\",\"logger\":\"airflow.dag_processing.bundles.manager.DagBundlesManager\"},{\"timestamp\":\"2026-11-15T16:45:13.871322Z\",\"event\":\"Filling up the DagBag from /opt/airflow/dags/training_pipeline.py\",\"level\":\"info\",\"logger\":\"airflow.models.dagbag.DagBag\"},{\"timestamp\":\"2026-11-15T16:45:14.817961Z\",\"event\":\"Task failed with exception\",\"level\":\"error\",\"logger\":\"task\",\"error_detail\":[{\"exc_type\":\"ValueError\",\"exc_value\":\"Dataset validation failed: Maximum null ratio 40.75% exceeds limit 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}\",\"exc_notes\":[],\"syntax_error\":null,\"is_cause\":false,\"frames\":[{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":825,\"name\":\"run\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/task_runner.py\",\"lineno\":1088,\"name\":\"_execute_task\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/decorator.py\",\"lineno\":251,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/bases/operator.py\",\"lineno\":408,\"name\":\"wrapper\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":212,\"name\":\"execute\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/providers/standard/operators/python.py\",\"lineno\":235,\"name\":\"execute_callable\"},{\"filename\":\"/home/airflow/.local/lib/python3.12/site-packages/airflow/sdk/execution_time/callback_runner.py\",\"lineno\":81,\"name\":\"run\"},{\"filename\":\"/opt/airflow/dags/training_pipeline.py\",\"lineno\":72,\"name\":\"task_validate_dataset\"}]}]}],\"continuation_token\":null}"
       },
-      "timestamp": "2026-11-15T16:25:35.778920+00:00"
+      "timestamp": "2026-11-15T16:45:43.325150+00:00"
     }
   ]
 }

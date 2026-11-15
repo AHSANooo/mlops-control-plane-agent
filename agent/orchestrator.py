@@ -632,6 +632,7 @@ class MLOpsAgentOrchestrator:
                         tools_executed.append(tasks_res)
                         if tasks_res.success and tasks_res.data:
                             failed_tasks = tasks_res.data.get("failed_tasks", [])
+                            upstream_failed = tasks_res.data.get("upstream_failed_tasks", [])
                             if failed_tasks:
                                 for ft in failed_tasks:
                                     log_res = self.execute_tool(
@@ -651,6 +652,10 @@ class MLOpsAgentOrchestrator:
                                     known_facts.append(
                                         f"Airflow task '{ft}' failed during execution of pipeline run '{latest_id}'."
                                     )
+                            if upstream_failed:
+                                known_facts.append(
+                                    f"Downstream Airflow tasks {upstream_failed} were aborted due to upstream failure."
+                                )
                 else:
                     uncertainties.append("No recorded DAG runs found in Airflow.")
             else:

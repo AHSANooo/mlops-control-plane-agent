@@ -34,10 +34,14 @@ Demonstrate that corrupting the training dataset triggers pipeline validation fa
   > ### Diagnosis: Training Pipeline Failure
   > **Identified Cause:** The latest Airflow training pipeline failed during execution.
   >
-  > **Validation Gate Analysis:** The pipeline was aborted because dataset validation detected a null ratio exceeding the strict 5.0% threshold (40.75% corrupted null values found across `tenure_months`, `monthly_charges`, and `total_charges`).
-  >
-  > **Recovery Action:** Revert corrupted data and restore clean DVC version via `git checkout data/dataset.csv.dvc && dvc checkout`.
-- **Known Facts:** `['Pipeline Stage 1 (validate_dataset) failed: Null ratio 40.75% exceeded allowed threshold 5.0%.']`
+  > **Task Diagnostic:** Task `validate_dataset` failed with error:
+  > ```text
+  > ValueError: Dataset validation failed: Maximum null ratio 40.75% exceeds limit 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}
+  > ```
+- **Known Facts:**
+  - `Latest Airflow pipeline run 'manual__2026-11-15T16:45:12.133883+00:00' finished with state 'failed'.`
+  - `Airflow task 'validate_dataset' failed during execution of pipeline run 'manual__2026-11-15T16:45:12.133883+00:00'.`
+  - `Downstream Airflow tasks ['preprocess_data', 'train_model', 'evaluate_and_log_mlflow', 'apply_model_quality_gate'] were aborted due to upstream failure.`
 - **Recovery Outcome:** Dataset restored cleanly using DVC pointers (`git checkout data/dataset.csv.dvc && dvc checkout -f`).
 
 ![Airflow 3 TaskFlow Pipeline Execution](../screenshots/airflow_dag.png)
@@ -57,9 +61,9 @@ Inject a broken container image into the production Kubernetes inference deploym
 2. Pod state observed:
    ```text
    NAME                               READY   STATUS         RESTARTS   AGE
-   model-inference-67d4454d95-cr7b5   1/1     Running        10         40m
-   model-inference-67d4454d95-x86sw   1/1     Running        10         40m
-   model-inference-6b6f4f6c48-w2wnx   0/1     ErrImagePull   0          14s
+   model-inference-67d4454d95-cr7b5   1/1     Running        25         5h
+   model-inference-67d4454d95-x86sw   1/1     Running        25         5h
+   model-inference-6b6f4f6c48-ncbkk   0/1     ErrImagePull   0          15s
    ```
 
 ### Agent Query & Diagnostic Response
@@ -67,7 +71,7 @@ Inject a broken container image into the production Kubernetes inference deploym
 - **Agent Diagnosis:**
   > ### Diagnosis: Prediction API Degraded
   > **Identified Cause:** Kubernetes pods in `mlops-prod` are in an unhealthy state:
-  > `model-inference-6b6f4f6c48-w2wnx: Phase is Pending, Waiting reason: ErrImagePull (failed to pull and unpack image "docker.io/library/mlops-inference:broken-tag": failed to resolve reference "docker.io/library/mlops-inference:broken-tag": pull access denied, repository does not exist or may require authorization)`
+  > `model-inference-6b6f4f6c48-ncbkk: Phase is Pending, Waiting reason: ErrImagePull (failed to pull and unpack image "docker.io/library/mlops-inference:broken-tag": pull access denied, repository does not exist or may require authorization)`
   >
   > **Recommended Recovery:** Roll back the broken image deployment via `kubectl rollout undo deployment/model-inference -n mlops-prod`.
 - **Remediation & Outcome:** Rolling back restored both deployment replicas to `1/1 Running` status with zero disruption.
@@ -86,7 +90,7 @@ Audit MLflow experiment runs and model registry versions, verify DVC dataset has
 - **Agent Assessment:**
   > ### Operational MLOps Status Assessment
   > **Key Findings:**
-  > - MLflow best run is `'11f2acae1ae0460aaccd4856492acfa8'` with $F_1=0.4945$ using dataset version `'v2.0'` (DVC hash: `55a2a6ac70acd49a6fae9efbbf3e2fa3`).
+  > - MLflow best run is `'11f2acae1ae0460aaccd4856492acfa8'` with $F_1=0.4945$ and $ROC\_AUC=0.7652$ using dataset version `'v2.0'` (DVC hash: `55a2a6ac70acd49a6fae9efbbf3e2fa3`).
   > - Current repository dataset reference is `'v2.0'` (Git commit: `e83c7b2`, DVC hash: `55a2a6ac70acd49a6fae9efbbf3e2fa3`).
   > - Kubernetes deployment `'model-inference'` in namespace `'mlops-prod'` is running model version `'v1.0'` linked to MLflow run `'run-v1-prod'`.
   >
