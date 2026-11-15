@@ -1,0 +1,48 @@
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.11.3
+    container_name: mlops-mlflow
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --default-artifact-root /mlflow/artifacts
+    volumes:
+      - ./mlflow:/mlflow
+    environment:
+      - MLFLOW_TRACKING_URI=http://0.0.0.0:5000
+    networks:
+      - mlops-network
+
+  airflow:
+    image: apache/airflow:3.0.0
+    container_name: mlops-airflow
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    command: standalone
+    environment:
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=false
+      - AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=true
+      - _PIP_ADDITIONAL_REQUIREMENTS=scikit-learn pandas pyarrow pyyaml mlflow joblib
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - AIRFLOW_HOME=/opt/airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./training:/opt/airflow/training
+      - ./data:/opt/airflow/data
+      - ./params.yaml:/opt/airflow/params.yaml
+    depends_on:
+      - mlflow
+    networks:
+      - mlops-network
+
+networks:
+  mlops-network:
+    driver: bridge

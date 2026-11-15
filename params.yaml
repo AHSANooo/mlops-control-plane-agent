@@ -1,0 +1,33 @@
+dataset:
+  raw_path: "data/dataset.csv"
+  processed_train_path: "data/train.parquet"
+  processed_test_path: "data/test.parquet"
+  target_column: "churn"
+  required_columns:
+    - customer_id
+    - tenure_months
+    - monthly_charges
+    - total_charges
+    - contract_type
+    - internet_service
+    - tech_support
+    - num_support_tickets
+    - churn
+  max_null_ratio: 0.05
+  test_size: 0.2
+  random_state: 42
+
+model:
+  type: "RandomForestClassifier"
+  n_estimators: 100
+  max_depth: 6
+  random_state: 42
+
+mlflow:
+  tracking_uri: "http://localhost:5000"
+  experiment_name: "customer-churn-prediction"
+  registered_model_name: "CustomerChurnClassifier"
+
+quality_gate:
+  min_f1: 0.70
+  min_roc_auc: 0.75

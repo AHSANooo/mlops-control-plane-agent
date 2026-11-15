@@ -1,0 +1,71 @@
+# Assignment documents (strictly ignored)
+Assignment_03_MLOps_AI_Agent_Complete.pdf
+*.pdf
+
+# Environment and secrets
+.env
+.env.local
+*.key
+*.pem
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+~/.venvs/
+
+# Testing and typing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Local databases and MLOps runtime storage
+*.db
+*.sqlite
+*.sqlite3
+mlflow/mlflow.db
+mlflow/artifacts/
+standalone_admin_password.txt
+airflow.cfg
+airflow.db
+webserver_config.py
+airflow/logs/
+airflow/standalone_admin_password.txt
+
+# DVC data files (tracked via DVC pointers, not Git)
+data/dataset.csv
+data/*.csv
+!data/.gitkeep
+/tmp/dvc-storage/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
