@@ -81,3 +81,6 @@ jobs:
 
       - name: Build Inference Service Image
         run: docker build -t mlops-inference:test ./inference_service
+
+      - name: Build Agent Control Plane Image
+        run: docker build -t mlops-agent:test .

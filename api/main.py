@@ -45,7 +45,7 @@ def health() -> dict[str, Any]:
 def chat_endpoint(request: AgentChatRequest) -> AgentChatResponse:
     """Conversational endpoint executing multi-tool gathering and evidence-based synthesis."""
     try:
-        response = orchestrator.plan_and_execute_grounded(request)
+        response = orchestrator.chat(request)
         return response
     except Exception as e:
         telemetry.log_event("API_ERROR", extra={"error": str(e)})

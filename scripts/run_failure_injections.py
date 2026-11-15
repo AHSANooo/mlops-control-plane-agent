@@ -6,7 +6,7 @@ import time
 from pathlib import Path
 
 from agent.main import chat
-from agent.tools.airflow_tools import trigger_training_dag
+from agent.tools.airflow_tools import get_dag_runs, trigger_training_dag
 from agent.tools.kubernetes_tools import get_unhealthy_pods_and_events, list_deployments_and_pods
 
 REPORTS_DIR = Path("reports")
@@ -38,8 +38,14 @@ def run_scenario_1_pipeline_failure() -> dict:
     trigger_res = trigger_training_dag(dag_id="churn_model_training_pipeline", user_confirmed=True)
     print(f"Airflow trigger: {trigger_res.success}, data: {trigger_res.data}, error: {trigger_res.error}")
 
-    # Wait a few seconds
-    time.sleep(5)
+    # Wait for Airflow scheduler to execute the validation stage
+    for _ in range(6):
+        time.sleep(5)
+        runs_res = get_dag_runs(dag_id="churn_model_training_pipeline", limit=1)
+        if runs_res.success and runs_res.data and runs_res.data.get("dag_runs"):
+            state = runs_res.data["dag_runs"][0].get("state")
+            if state in ("failed", "success"):
+                break
 
     # 4. Query Agent
     query = "Why did the latest training pipeline fail?"
