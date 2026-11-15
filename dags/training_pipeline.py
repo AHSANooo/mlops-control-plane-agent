@@ -187,11 +187,10 @@ def churn_training_pipeline() -> None:
         import subprocess
 
         import joblib
+        import mlflow
         import mlflow.sklearn
         import pandas as pd
         from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
-
-        import mlflow
 
         config_path = Path(train_result["config_path"])
         with open(config_path, encoding="utf-8") as f:

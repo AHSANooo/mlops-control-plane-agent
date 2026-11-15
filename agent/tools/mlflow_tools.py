@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import time
 from typing import Any
 
@@ -13,7 +14,9 @@ from agent.telemetry import telemetry
 
 
 def _get_client() -> MlflowClient:
-    """Instantiate authenticated or local MlflowClient."""
+    """Instantiate authenticated or local MlflowClient with safe connection timeouts."""
+    os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", "3")
+    os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", "1")
     return MlflowClient(tracking_uri=settings.mlflow_tracking_uri)
 
 

@@ -15,17 +15,21 @@ from agent.telemetry import telemetry
 
 
 def _run_git_or_dvc(cmd: list[str], cwd: str | None = None) -> tuple[int, str, str]:
-    """Execute git or dvc command safely with shell=False."""
+    """Execute git or dvc command safely with shell=False and strict timeout."""
     work_dir = cwd or settings.dvc_repo_dir
-    proc = subprocess.run(
-        cmd,
-        cwd=work_dir,
-        capture_output=True,
-        text=True,
-        check=False,
-        shell=False,
-    )
-    return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
+    try:
+        proc = subprocess.run(
+            cmd,
+            cwd=work_dir,
+            capture_output=True,
+            text=True,
+            check=False,
+            shell=False,
+            timeout=15,
+        )
+        return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
+    except subprocess.TimeoutExpired:
+        return 124, "", f"Command {' '.join(cmd)} timed out after 15 seconds."
 
 
 def list_tracked_datasets() -> ToolResult:
@@ -34,7 +38,9 @@ def list_tracked_datasets() -> ToolResult:
     tool_name = "dvc_list_tracked_datasets"
     try:
         repo_dir = Path(settings.dvc_repo_dir)
-        dvc_files = list(repo_dir.glob("**/*.dvc"))
+        # Search .dvc files avoiding recursive walk through .git, .venv, etc.
+        candidates = list(repo_dir.glob("*.dvc")) + list(repo_dir.glob("*/*.dvc")) + list(repo_dir.glob("*/*/*.dvc"))
+        dvc_files = [p for p in candidates if not any(part.startswith(".") for part in p.relative_to(repo_dir).parts)]
         datasets: list[dict[str, Any]] = []
 
         for df_path in dvc_files:

@@ -7,13 +7,12 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+import mlflow
 import mlflow.sklearn
 import pandas as pd
 import yaml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
-
-import mlflow
 
 
 def load_config(config_path: str | Path = "params.yaml") -> dict[str, Any]:
