@@ -42,10 +42,12 @@ def run_scenario_1_pipeline_failure() -> dict:
     for _ in range(6):
         time.sleep(5)
         runs_res = get_dag_runs(dag_id="churn_model_training_pipeline", limit=1)
-        if runs_res.success and runs_res.data and runs_res.data.get("dag_runs"):
-            state = runs_res.data["dag_runs"][0].get("state")
-            if state in ("failed", "success"):
-                break
+        if runs_res.success and runs_res.data:
+            runs_list = runs_res.data.get("runs", runs_res.data.get("dag_runs", []))
+            if runs_list:
+                state = runs_list[0].get("state")
+                if state in ("failed", "success"):
+                    break
 
     # 4. Query Agent
     query = "Why did the latest training pipeline fail?"

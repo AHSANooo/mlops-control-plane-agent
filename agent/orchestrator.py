@@ -557,14 +557,27 @@ class MLOpsAgentOrchestrator:
                 recommended_actions.append(f"Execute safe checkout sequence: {cmds[0]} && {cmds[1]} && {cmds[2]}.")
 
         # 3. Query Kubernetes
-        if is_retrain_or_multi or any(k in query for k in ["kubernetes", "k8s", "pod", "deployment", "service"]):
+        if is_retrain_or_multi or any(
+            k in query
+            for k in [
+                "kubernetes",
+                "k8s",
+                "pod",
+                "deployment",
+                "service",
+                "degraded",
+                "unavailable",
+                "api",
+            ]
+        ):
             k8s_ver = self.execute_tool("k8s_get_deployed_app_version", namespace="mlops-prod")
             tools_executed.append(k8s_ver)
             if k8s_ver.success and k8s_ver.data:
                 k_data = k8s_ver.data
+                deployed_img = k_data.get("deployed_image", k_data.get("image", "unknown"))
                 known_facts.append(
                     f"Kubernetes deployment '{k_data.get('deployment_name')}' in namespace 'mlops-prod' "
-                    f"is running image '{k_data.get('image')}' (model_version: '{k_data.get('model_version')}', "
+                    f"is running image '{deployed_img}' (model_version: '{k_data.get('model_version')}', "
                     f"MLflow run ID: '{k_data.get('mlflow_run_id')}')."
                 )
                 evidence.append(
@@ -593,7 +606,7 @@ class MLOpsAgentOrchestrator:
             af_runs = self.execute_tool("airflow_get_dag_runs", dag_id="churn_model_training_pipeline", limit=3)
             tools_executed.append(af_runs)
             if af_runs.success and af_runs.data:
-                runs = af_runs.data.get("dag_runs", [])
+                runs = af_runs.data.get("runs", af_runs.data.get("dag_runs", []))
                 if runs:
                     latest = runs[0]
                     latest_id = latest.get("dag_run_id")
