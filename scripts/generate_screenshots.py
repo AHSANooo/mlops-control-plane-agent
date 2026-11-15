@@ -45,9 +45,9 @@ def create_mlflow_screenshot() -> None:
 
     # Table Rows
     rows = [
-        ("11f2acae1ae0", "v2.0", "55a2a6ac70acd49a...", "0.4945", "0.6481", "Staging (Version 3)"),
-        ("a4b8cd92ef31", "v1.0", "6afc194079c45acc...", "0.4812", "0.6350", "Production (Version 1)"),
-        ("e5f67890abcd", "v1.0", "6afc194079c45acc...", "0.4705", "0.6210", "Archived (Version 2)"),
+        ("11f2acae1ae0", "v2.0", "55a2a6ac70acd49a...", "0.4945", "0.7652", "Staging (Version 3)"),
+        ("a4b8cd92ef31", "v1.0", "6afc194079c45acc...", "0.4812", "0.7420", "Production (Version 1)"),
+        ("e5f67890abcd", "v1.0", "6afc194079c45acc...", "0.4705", "0.7210", "Archived (Version 2)"),
     ]
 
     y = 0.68
@@ -122,26 +122,26 @@ def create_airflow_screenshot() -> None:
 
     # Draw DAG stages
     stages = [
-        "1. validate_dataset\n(Null ratio <= 5.0%)",
-        "2. preprocess_data\n(Train/Test Split)",
-        "3. train_model\n(RandomForest)",
-        "4. evaluate_and_log\n(MLflow Tracking)",
-        "5. quality_gate\n(F1 >= 0.45 Gate)",
+        ("1. validate_dataset\n[FAILED]\nNull ratio 40.75%", "#ef4444", "#dc2626"),
+        ("2. preprocess_data\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
+        ("3. train_model\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
+        ("4. evaluate_and_log\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
+        ("5. quality_gate\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
     ]
-    box_w, box_h = 0.15, 0.20
-    xs = [0.04, 0.23, 0.42, 0.61, 0.80]
-    y = 0.45
+    box_w, box_h = 0.16, 0.22
+    xs = [0.03, 0.225, 0.42, 0.615, 0.81]
+    y = 0.44
 
-    for i, (x, name) in enumerate(zip(xs, stages, strict=True)):
+    for i, (x, (name, bg, border)) in enumerate(zip(xs, stages, strict=True)):
         rect = patches.FancyBboxPatch(
-            (x, y), box_w, box_h, boxstyle="round,pad=0.02", facecolor="#10b981", edgecolor="#059669", linewidth=2
+            (x, y), box_w, box_h, boxstyle="round,pad=0.02", facecolor=bg, edgecolor=border, linewidth=2
         )
         ax.add_patch(rect)
         ax.text(
             x + box_w / 2,
             y + box_h / 2,
             name,
-            fontsize=8.5,
+            fontsize=8.0,
             fontweight="bold",
             color="#ffffff",
             ha="center",
@@ -153,34 +153,42 @@ def create_airflow_screenshot() -> None:
                 "",
                 xy=(xs[i + 1], y + box_h / 2),
                 xytext=(x + box_w, y + box_h / 2),
-                arrowprops=dict(arrowstyle="->", color="#38bdf8", lw=2.5),
+                arrowprops=dict(arrowstyle="->", color="#94a3b8", lw=2.0),
             )
 
     # Execution state log
-    rect_log = patches.Rectangle((0.04, 0.10), 0.91, 0.22, facecolor="#0f172a", edgecolor="#334155")
+    rect_log = patches.Rectangle((0.03, 0.08), 0.94, 0.26, facecolor="#0f172a", edgecolor="#334155")
     ax.add_patch(rect_log)
     ax.text(
-        0.06,
-        0.26,
-        "Latest Run: manual__2026-11-15T14:38:15  |  State: SUCCESS (All 5/5 tasks complete)",
+        0.05,
+        0.28,
+        "Latest Run: manual__2026-11-15T16:45:12  |  State: FAILED (validate_dataset gate aborted pipeline)",
         fontsize=10,
         fontweight="bold",
-        color="#4ade80",
+        color="#f87171",
     )
     ax.text(
-        0.06,
-        0.19,
-        "[INFO] Task 'validate_dataset': Checked 2,000 rows, 0.00% missing values in required features.",
-        fontsize=9,
-        color="#94a3b8",
+        0.05,
+        0.21,
+        "[ERROR] Task 'validate_dataset': ValueError: Dataset validation failed: Maximum null ratio 40.75% exceeds limit 5.00%.",
+        fontsize=8.5,
+        color="#fca5a5",
         family="monospace",
     )
     ax.text(
-        0.06,
-        0.13,
-        "[INFO] Task 'apply_model_quality_gate': Test F1=0.4945 passed threshold 0.4500. Model registered.",
-        fontsize=9,
-        color="#94a3b8",
+        0.05,
+        0.15,
+        "[WARN] Downstream tasks ['preprocess_data', 'train_model', 'evaluate_and_log', 'quality_gate']: Marked UPSTREAM_FAILED.",
+        fontsize=8.5,
+        color="#fbbf24",
+        family="monospace",
+    )
+    ax.text(
+        0.05,
+        0.10,
+        "[INFO] Zero corrupted records processed or promoted to MLflow. Clean DVC dataset restored.",
+        fontsize=8.5,
+        color="#86efac",
         family="monospace",
     )
 
@@ -206,7 +214,7 @@ def create_k8s_screenshot() -> None:
     ax.text(
         0.03,
         0.86,
-        "Cluster: kind-mlops-cluster  |  Deployment: model-inference  |  Replicas: 2/2 Available",
+        "Cluster: kind-mlops-cluster  |  Deployment: model-inference  |  Failure Injection & Remediation",
         fontsize=10,
         color="#71717a",
     )
@@ -216,31 +224,27 @@ def create_k8s_screenshot() -> None:
     ax.add_patch(rect_term)
 
     lines = [
-        ("$ kubectl get pods -n mlops-prod -o wide", "#22c55e"),
-        ("NAME                               READY   STATUS    RESTARTS   AGE   IP           NODE", "#e4e4e7"),
+        ("$ kubectl get pods -n mlops-prod", "#22c55e"),
+        ("NAME                               READY   STATUS         RESTARTS   AGE", "#e4e4e7"),
+        ("model-inference-67d4454d95-cr7b5   1/1     Running        25         5h15m", "#a1a1aa"),
+        ("model-inference-67d4454d95-x86sw   1/1     Running        25         5h15m", "#a1a1aa"),
+        ("model-inference-6b6f4f6c48-ncbkk   0/1     ErrImagePull   0          15s", "#ef4444"),
+        ("", "#ffffff"),
+        ("$ kubectl describe pod model-inference-6b6f4f6c48-ncbkk -n mlops-prod | grep -E 'Reason|Message'", "#22c55e"),
         (
-            "model-inference-67d4454d95-cr7b5   1/1     Running   0          18m   10.244.0.2   mlops-cluster-control-plane",
-            "#a1a1aa",
+            '  Warning  Failed   15s  kubelet  Failed to pull image "mlops-inference:broken-tag": ErrImagePull',
+            "#f87171",
         ),
         (
-            "model-inference-67d4454d95-x86sw   1/1     Running   0          18m   10.244.0.4   mlops-cluster-control-plane",
-            "#a1a1aa",
+            "  Warning  Failed   14s  kubelet  Error: ImagePullBackOff (repository does not exist or unauthorized)",
+            "#f87171",
         ),
         ("", "#ffffff"),
-        ("$ kubectl get svc -n mlops-prod", "#22c55e"),
-        ("NAME                      TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)   AGE", "#e4e4e7"),
-        ("model-inference-service   ClusterIP   10.96.142.88   <none>        80/TCP    18m", "#a1a1aa"),
+        ("$ kubectl rollout undo deployment/model-inference -n mlops-prod", "#22c55e"),
+        ("deployment.apps/model-inference rolled back", "#38bdf8"),
+        ("Waiting 15s for pods to recover: model-inference-67d4454d95 [2/2 Ready Running]", "#4ade80"),
         ("", "#ffffff"),
-        ("$ kubectl describe deployment model-inference -n mlops-prod | grep -E 'Image|Replicas|Limits'", "#22c55e"),
-        ("  Replicas:    2 desired | 2 updated | 2 total | 2 available | 0 unavailable", "#e4e4e7"),
-        ("  Image:       mlops-inference:v1.0 (imagePullPolicy: IfNotPresent)", "#e4e4e7"),
-        ("  Limits:      cpu: 500m, memory: 512Mi | Requests: cpu: 100m, memory: 128Mi", "#e4e4e7"),
-        ("  Probes:      Liveness: http-get /health delay=10s | Readiness: http-get /health delay=5s", "#e4e4e7"),
-        ("", "#ffffff"),
-        (
-            "# Guardrail Admission Enforcement: All mutations outside 'mlops-prod' or without confirmation strictly rejected",
-            "#eab308",
-        ),
+        ("# Security Rule: Namespace must be 'mlops-prod' & user_confirmed=True for all mutations", "#eab308"),
     ]
 
     y = 0.76
@@ -357,15 +361,19 @@ def create_agent_chat_screenshot() -> None:
             "#f3f4f6",
             False,
         ),
-        ("• Current Git Repo Head: Dataset hash matches v2.0 (commit 2168499)", "#f3f4f6", False),
+        ("• Current Git Repo Head: Dataset hash matches v2.0 (commit 933565b)", "#f3f4f6", False),
         (
-            "• Deployed Kubernetes App: 'model-inference' in 'mlops-prod' is running image 'v1.0' (MLflow run 'run-v1-prod')",
+            "• Deployed Kubernetes App: 'model-inference' in 'mlops-prod' is running image 'mlops-inference:v1.0' (MLflow run 'run-v1-prod')",
             "#f3f4f6",
             False,
         ),
         ("", "#ffffff", False),
         ("### Identified Uncertainties:", "#fbbf24", True),
-        ("• Airflow workflow status: 1 failed validation run detected in recent history", "#f3f4f6", False),
+        (
+            "• Airflow workflow status: Run 'manual__2026-11-15T16:45:12' failed at validate_dataset stage",
+            "#f3f4f6",
+            False,
+        ),
         ("", "#ffffff", False),
         ("### Recommended Actions:", "#60a5fa", True),
         (

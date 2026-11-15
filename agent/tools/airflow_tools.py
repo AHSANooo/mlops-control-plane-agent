@@ -198,7 +198,8 @@ def get_task_instances(dag_id: str, dag_run_id: str) -> ToolResult:
                 }
                 for t in tasks
             ]
-            failed_tasks = [t["task_id"] for t in summary if t["state"] in ("failed", "upstream_failed")]
+            failed_tasks = [t["task_id"] for t in summary if t["state"] == "failed"]
+            upstream_failed_tasks = [t["task_id"] for t in summary if t["state"] == "upstream_failed"]
             duration_ms = (time.perf_counter() - start_time) * 1000
             return ToolResult(
                 success=True,
@@ -208,6 +209,7 @@ def get_task_instances(dag_id: str, dag_run_id: str) -> ToolResult:
                     "dag_run_id": dag_run_id,
                     "tasks": summary,
                     "failed_tasks": failed_tasks,
+                    "upstream_failed_tasks": upstream_failed_tasks,
                 },
                 error=None,
                 duration_ms=duration_ms,
