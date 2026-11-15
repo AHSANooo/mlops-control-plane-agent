@@ -18,7 +18,7 @@ def chat(
         user_confirmed=user_confirmed,
         request_id=request_id,
     )
-    return orchestrator.plan_and_execute_grounded(req)
+    return orchestrator.chat(req)
 
 
 __all__ = ["MLOpsAgentOrchestrator", "chat", "orchestrator", "settings"]

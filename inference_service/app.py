@@ -73,7 +73,20 @@ def predict(request: PredictionRequest) -> PredictionResponse:
     """Predict customer churn based on input telemetry and behavioral features."""
     try:
         if _model is not None:
-            feat_df = pd.DataFrame([request.model_dump()])
+            feat_dict = {
+                "tenure_months": request.tenure_months,
+                "monthly_charges": request.monthly_charges,
+                "total_charges": request.total_charges,
+                "num_support_tickets": request.num_support_tickets,
+                "contract_type_one-year": int(request.contract_type == "one-year"),
+                "contract_type_two-year": int(request.contract_type == "two-year"),
+                "internet_service_fiber-optic": int(request.internet_service == "fiber-optic"),
+                "internet_service_no": int(request.internet_service == "no"),
+                "tech_support_yes": int(request.tech_support == "yes"),
+            }
+            feat_df = pd.DataFrame([feat_dict])
+            if hasattr(_model, "feature_names_in_"):
+                feat_df = feat_df.reindex(columns=_model.feature_names_in_, fill_value=0)
             proba = float(_model.predict_proba(feat_df)[0][1])
             pred = int(_model.predict(feat_df)[0])
             prob = max(0.0, min(1.0, proba))

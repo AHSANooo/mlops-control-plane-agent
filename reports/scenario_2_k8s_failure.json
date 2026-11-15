@@ -1,9 +1,68 @@
 {
   "scenario": "Kubernetes Infrastructure Failure Injection",
   "agent_query": "Why is my prediction API degraded?",
-  "agent_response": "### Diagnosis: Prediction API Inspection\n\nAll application pods in namespace `mlops-prod` are currently reporting healthy with 0 restart events.",
-  "known_facts": [],
+  "agent_response": "### Diagnosis: Prediction API Degraded\n\n**Identified Cause:** Kubernetes pods in `mlops-prod` are in an unhealthy state:\nmodel-inference-6b6f4f6c48-ncbkk: Phase is Pending, Waiting reason: ErrImagePull (failed to pull and unpack image \"docker.io/library/mlops-inference:broken-tag\": failed to resolve reference \"docker.io/library/mlops-inference:broken-tag\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed)\n\n**Recommended Recovery:** Roll back the broken image deployment via `kubectl rollout undo deployment/model-inference -n mlops-prod`.",
+  "known_facts": [
+    "Kubernetes deployment 'model-inference' in namespace 'mlops-prod' is running image 'mlops-inference:broken-tag' (model_version: 'v1.0', MLflow run ID: 'run-v1-prod')."
+  ],
   "uncertainties": [],
   "recommended_actions": [],
-  "evidence": []
+  "evidence": [
+    {
+      "source": "Kubernetes",
+      "summary": "Live deployed inference service environment and image tag",
+      "details": {
+        "namespace": "mlops-prod",
+        "deployment_name": "model-inference",
+        "deployed_image": "mlops-inference:broken-tag",
+        "model_version": "v1.0",
+        "mlflow_run_id": "run-v1-prod",
+        "service_name": "churn-inference-service"
+      },
+      "timestamp": "2026-11-15T16:25:53.314413+00:00"
+    },
+    {
+      "source": "Kubernetes Diagnostics",
+      "summary": "Unhealthy pods and warning event analysis",
+      "details": {
+        "namespace": "mlops-prod",
+        "unhealthy_pods_count": 1,
+        "unhealthy_pods": [
+          {
+            "pod_name": "model-inference-6b6f4f6c48-ncbkk",
+            "phase": "Pending",
+            "reasons": [
+              "Phase is Pending",
+              "Waiting reason: ErrImagePull (failed to pull and unpack image \"docker.io/library/mlops-inference:broken-tag\": failed to resolve reference \"docker.io/library/mlops-inference:broken-tag\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed)"
+            ]
+          }
+        ],
+        "warning_events_count": 3,
+        "warning_events": [
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Failed to pull image \"mlops-inference:broken-tag\": failed to pull and unpack image \"docker.io/library/mlops-inference:broken-tag\": failed to resolve reference \"docker.io/library/mlops-inference:broken-tag\": pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed",
+            "object": "model-inference-6b6f4f6c48-ncbkk",
+            "last_timestamp": "2026-11-15 16:25:40+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ErrImagePull",
+            "object": "model-inference-6b6f4f6c48-ncbkk",
+            "last_timestamp": "2026-11-15 16:25:40+00:00"
+          },
+          {
+            "type": "Warning",
+            "reason": "Failed",
+            "message": "Error: ImagePullBackOff",
+            "object": "model-inference-6b6f4f6c48-ncbkk",
+            "last_timestamp": "2026-11-15 16:25:40+00:00"
+          }
+        ]
+      },
+      "timestamp": "2026-11-15T16:25:53.336522+00:00"
+    }
+  ]
 }

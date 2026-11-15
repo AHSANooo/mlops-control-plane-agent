@@ -66,8 +66,9 @@ data/*.parquet
 !data/.gitkeep
 /tmp/dvc-storage/
 
-# IDE files
+# IDE and dump files
 .vscode/
 .idea/
 *.swp
 *.swo
+repo_dump*.txt
