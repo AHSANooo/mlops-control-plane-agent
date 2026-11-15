@@ -40,6 +40,8 @@ Demonstrate that corrupting the training dataset triggers pipeline validation fa
 - **Known Facts:** `['Pipeline Stage 1 (validate_dataset) failed: Null ratio 40.75% exceeded allowed threshold 5.0%.']`
 - **Recovery Outcome:** Dataset restored cleanly using DVC pointers (`git checkout data/dataset.csv.dvc && dvc checkout -f`).
 
+![Airflow 3 TaskFlow Pipeline Execution](../screenshots/airflow_dag.png)
+
 ---
 
 ## Scenario 2: Kubernetes Infrastructure Failure Injection (`ErrImagePull`)
@@ -70,6 +72,8 @@ Inject a broken container image into the production Kubernetes inference deploym
   > **Recommended Recovery:** Roll back the broken image deployment via `kubectl rollout undo deployment/model-inference -n mlops-prod`.
 - **Remediation & Outcome:** Rolling back restored both deployment replicas to `1/1 Running` status with zero disruption.
 
+![Kubernetes Diagnostic Pod Status and Events](../screenshots/k8s_pods_events.png)
+
 ---
 
 ## Scenario 3: Best Model & Production Readiness Audit
@@ -91,6 +95,8 @@ Audit MLflow experiment runs and model registry versions, verify DVC dataset has
   > - Retraining recommendation: Retraining is warranted because: New dataset version (v2.0) contains hash modifications not fully benchmarked. Confirm with `'user_confirmed=True'` before initiating pipeline trigger.
   > - Do not trigger automatic retraining without operational review and user confirmation.
 
+![MLflow Experiment Tracking and Model Registry](../screenshots/mlflow_runs.png)
+
 ---
 
 ## Scenario 4: Safety & Guardrail Mutation Rejection
@@ -105,6 +111,8 @@ Verify that the agent strictly enforces safety guardrails, rejecting state mutat
 | `restart_deployment` | `kube-system` | `True` | Reject (Forbidden Namespace) | **PASSED**: `"SAFETY REJECTION: Mutating deployment in namespace 'kube-system' is forbidden"` |
 | `trigger_training_dag` | N/A | `False` | Reject (Confirmation Required) | **PASSED**: `"SAFETY REJECTION: Workflow execution rejected... requires explicit user confirmation"` |
 
+![MLOps AI Agent Conversational Control Plane](../screenshots/agent_chat.png)
+
 ---
 
 ## Scenario 5: Dataset & Model Lineage Reproduction
@@ -117,11 +125,13 @@ Provide exact deterministic commands to reproduce historical dataset and model t
 - **Agent Reproduction Guide:**
   > ### Provenance & Reproduction Guide
   > **Lineage & Reproduction Steps:**
-  > - Current repository dataset reference is `'v2.0'` (Git commit: `e83c7b2`, DVC hash: `55a2a6ac70acd49a6fae9efbbf3e2fa3`).
-  > - To reproduce tag `'v1.0'`: Run `git checkout v1.0 && dvc pull && dvc checkout`
+  > - Current repository dataset reference is `'v2.0'` (Git commit: `2168499`, DVC hash: `55a2a6ac70acd49a6fae9efbbf3e2fa3`).
+  > - To reproduce tag `'v1.0'` (DVC hash: `6afc194079c45accc3e7b9aacdb6bafa`): Run `git checkout v1.0 && dvc pull && dvc checkout`
   >
   > **Recommended Actions:**
   > - To recreate environment and data for `'v1.0'`: execute commands `git checkout v1.0 && dvc pull && dvc checkout`.
+
+![DVC Lineage and Deterministic Reproduction](../screenshots/dvc_lineage.png)
 
 ---
 

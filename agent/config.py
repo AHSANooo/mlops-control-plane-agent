@@ -31,7 +31,7 @@ class AgentSettings(BaseSettings):
         alias="AIRFLOW_USERNAME",
     )
     airflow_password: str = Field(
-        default="3zHWhuXKTm7ADCqr",
+        default="",
         alias="AIRFLOW_PASSWORD",
     )
     airflow_api_token: str | None = Field(

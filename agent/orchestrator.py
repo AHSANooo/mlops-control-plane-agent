@@ -1,11 +1,14 @@
-"""Intelligent Multi-Tool MLOps Agent Orchestrator with Grounded Reasoning."""
+"""Intelligent Multi-Tool MLOps Agent Orchestrator with Grounded Reasoning and LLM Function Calling."""
 
 from __future__ import annotations
 
+import json
+import os
 import uuid
 from collections.abc import Callable
 from typing import Any
 
+from agent.config import settings
 from agent.schemas import (
     AgentChatRequest,
     AgentChatResponse,
@@ -49,6 +52,218 @@ TOOL_REGISTRY: dict[str, Callable[..., ToolResult]] = {
     "k8s_restart_deployment": kubernetes_tools.restart_deployment,
 }
 
+OPENAI_TOOL_SCHEMAS: list[dict[str, Any]] = [
+    {
+        "type": "function",
+        "function": {
+            "name": "dvc_list_tracked_datasets",
+            "description": "List all datasets tracked by DVC in the repository.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "dvc_get_dataset_version_info",
+            "description": "Retrieve Git commit, tag, and DVC data hash for a specific Git reference.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "version_or_tag": {"type": "string", "description": "Git commit, branch, or tag (e.g. v1.0, HEAD)"}
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "dvc_diff_dataset_versions",
+            "description": "Compare dataset hash changes between two Git tags or references.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "target_a": {"type": "string", "description": "First Git reference (e.g. v1.0)"},
+                    "target_b": {"type": "string", "description": "Second Git reference (e.g. v2.0)"},
+                },
+                "required": ["target_a", "target_b"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "dvc_get_reproduction_commands",
+            "description": "Get exact safe commands required to reproduce/checkout a specific dataset version.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "version_or_tag": {"type": "string", "description": "Target version or tag (e.g. v1.0)"}
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "mlflow_get_best_run",
+            "description": "Find the best experiment run ranked by evaluation metric (e.g. f1_score).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "experiment_name": {"type": "string", "default": "customer-churn-prediction"},
+                    "metric_name": {"type": "string", "default": "f1_score"},
+                    "ascending": {"type": "boolean", "default": False},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "mlflow_compare_runs",
+            "description": "Compare metrics, parameters, and tags across multiple MLflow run IDs.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "run_ids": {"type": "array", "items": {"type": "string"}, "description": "List of run IDs"},
+                    "metric_keys": {"type": "array", "items": {"type": "string"}, "description": "Metrics to compare"},
+                },
+                "required": ["run_ids"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "mlflow_get_model_registry_status",
+            "description": "Inspect registered model versions and deployment stages in MLflow Model Registry.",
+            "parameters": {
+                "type": "object",
+                "properties": {"model_name": {"type": "string", "default": "CustomerChurnClassifier"}},
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "airflow_list_dags",
+            "description": "List available Airflow DAG workflows and their active/paused status.",
+            "parameters": {"type": "object", "properties": {}},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "airflow_get_dag_runs",
+            "description": "Fetch execution history and status of DAG runs.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "dag_id": {"type": "string", "default": "churn_model_training_pipeline"},
+                    "limit": {"type": "integer", "default": 5},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "airflow_get_failed_task_logs",
+            "description": "Retrieve failure logs and stack trace for a specific failed task instance.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "dag_id": {"type": "string"},
+                    "dag_run_id": {"type": "string"},
+                    "task_id": {"type": "string"},
+                    "try_number": {"type": "integer", "default": 1},
+                },
+                "required": ["dag_id", "dag_run_id", "task_id"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "airflow_trigger_training_dag",
+            "description": "Trigger an Airflow training pipeline DAG run (requires user_confirmed=True).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "dag_id": {"type": "string", "default": "churn_model_training_pipeline"},
+                    "user_confirmed": {"type": "boolean", "description": "Must be True to permit execution"},
+                },
+                "required": ["dag_id", "user_confirmed"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "k8s_list_deployments_and_pods",
+            "description": "List Kubernetes deployments and pods in namespace (must be mlops-prod).",
+            "parameters": {
+                "type": "object",
+                "properties": {"namespace": {"type": "string", "default": "mlops-prod"}},
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "k8s_get_pod_logs",
+            "description": "Retrieve recent container logs for a pod in mlops-prod.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "pod_name": {"type": "string"},
+                    "namespace": {"type": "string", "default": "mlops-prod"},
+                    "tail_lines": {"type": "integer", "default": 50},
+                },
+                "required": ["pod_name"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "k8s_get_unhealthy_pods_and_events",
+            "description": "Identify failing, crashing, or CrashLoopBackOff pods and warning events.",
+            "parameters": {
+                "type": "object",
+                "properties": {"namespace": {"type": "string", "default": "mlops-prod"}},
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "k8s_get_deployed_app_version",
+            "description": "Inspect image tags, configmap, and environment variables of deployed inference service.",
+            "parameters": {
+                "type": "object",
+                "properties": {"namespace": {"type": "string", "default": "mlops-prod"}},
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "k8s_restart_deployment",
+            "description": "Perform rolling restart of a deployment in mlops-prod (requires user_confirmed=True).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "deployment_name": {"type": "string", "default": "model-inference"},
+                    "namespace": {"type": "string", "default": "mlops-prod"},
+                    "user_confirmed": {"type": "boolean"},
+                },
+                "required": ["deployment_name", "user_confirmed"],
+            },
+        },
+    },
+]
+
 SYSTEM_PROMPT = """You are an expert MLOps AI Engineer Assistant with direct tool access to DVC, MLflow, Airflow, and Kubernetes.
 Strict Grounding & Operational Rules:
 1. Never invent or hallucinate metrics, git hashes, run IDs, pod names, or logs. If a tool fails or data is missing, report it as an uncertainty.
@@ -57,7 +272,7 @@ Strict Grounding & Operational Rules:
    - Known Facts: grounded strictly in tool responses.
    - Uncertainties: missing parameters, unreachable services, or unconfirmed states.
    - Recommended Actions: actionable next steps.
-4. Never auto-trigger training or restart clusters without explicit user confirmation.
+4. Never auto-trigger training or restart clusters without explicit user confirmation (user_confirmed=True).
 """
 
 
@@ -80,8 +295,102 @@ class MLOpsAgentOrchestrator:
         func = self.tools[tool_name]
         return func(**kwargs)
 
+    def chat(self, request: AgentChatRequest) -> AgentChatResponse:
+        """Primary chat entrypoint: utilizes live LLM tool-calling if API key configured, otherwise grounded deterministic plan."""
+        api_key = settings.openai_api_key or os.environ.get("OPENAI_API_KEY")
+        if api_key:
+            try:
+                return self._chat_with_llm(request, api_key)
+            except Exception as llm_err:
+                telemetry.log_event("LLM_FALLBACK", extra={"warning": str(llm_err)})
+
+        # Fallback to deterministic grounded multi-tool execution path
+        return self.plan_and_execute_grounded(request)
+
+    def _chat_with_llm(self, request: AgentChatRequest, api_key: str) -> AgentChatResponse:
+        """Execute OpenAI function-calling agent loop."""
+        import openai
+
+        request_id = request.request_id or f"req-{uuid.uuid4().hex[:8]}"
+        client = openai.OpenAI(api_key=api_key)
+
+        messages: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+        for turn in request.conversation_history:
+            messages.append({"role": turn.get("role", "user"), "content": turn.get("content", "")})
+        messages.append({"role": "user", "content": request.message})
+
+        tools_executed: list[ToolResult] = []
+        evidence: list[EvidenceItem] = []
+        known_facts: list[str] = []
+        uncertainties: list[str] = []
+        recommended_actions: list[str] = []
+
+        # Tool calling loop (max 5 iterations)
+        for _ in range(5):
+            response = client.chat.completions.create(  # type: ignore[call-overload]
+                model=settings.openai_model,
+                messages=messages,
+                tools=OPENAI_TOOL_SCHEMAS,  # type: ignore[arg-type]
+                tool_choice="auto",
+            )
+            msg = response.choices[0].message
+            tool_calls = msg.tool_calls
+
+            if not tool_calls:
+                # LLM finished generating final response
+                final_text = msg.content or ""
+                return AgentChatResponse(
+                    reply=final_text,
+                    known_facts=known_facts,
+                    uncertainties=uncertainties,
+                    recommended_actions=recommended_actions,
+                    tools_executed=tools_executed,
+                    evidence=evidence,
+                    request_id=request_id,
+                )
+
+            # Process tool calls requested by LLM
+            messages.append(msg.to_dict())  # type: ignore[arg-type]
+            for tc in tool_calls:
+                fn_name = tc.function.name
+                try:
+                    fn_args = json.loads(tc.function.arguments) if tc.function.arguments else {}
+                except Exception:
+                    fn_args = {}
+
+                # Security override: pass user_confirmed from request
+                if "user_confirmed" in fn_args and request.user_confirmed is not None:
+                    fn_args["user_confirmed"] = request.user_confirmed
+
+                tool_res = self.execute_tool(fn_name, **fn_args)
+                tools_executed.append(tool_res)
+
+                if tool_res.success and tool_res.data:
+                    evidence.append(
+                        EvidenceItem(
+                            source=fn_name,
+                            summary=f"Executed {fn_name} successfully",
+                            details=tool_res.data,
+                        )
+                    )
+                    known_facts.append(f"Tool {fn_name}: {str(tool_res.data)[:120]}")
+                else:
+                    uncertainties.append(f"Tool {fn_name} failed: {tool_res.error}")
+
+                messages.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": tc.id,
+                        "name": fn_name,
+                        "content": json.dumps(tool_res.model_dump()),
+                    }
+                )
+
+        # Fallback if max iterations reached
+        return self.plan_and_execute_grounded(request)
+
     def plan_and_execute_grounded(self, request: AgentChatRequest) -> AgentChatResponse:
-        """Execute multi-tool gathering and formulate evidence-based response."""
+        """Execute multi-tool gathering and formulate strictly grounded, evidence-based response."""
         request_id = request.request_id or f"req-{uuid.uuid4().hex[:8]}"
         query = request.message.lower()
 
@@ -92,6 +401,54 @@ class MLOpsAgentOrchestrator:
         recommended_actions: list[str] = []
 
         telemetry.log_event("ORCHESTRATOR_START", request_id=request_id, extra={"query": request.message})
+
+        # Scenario 4 / Safety Check Mutations
+        if "restart" in query and "deployment" in query:
+            res_restart = self.execute_tool(
+                "k8s_restart_deployment",
+                deployment_name="model-inference",
+                namespace="mlops-prod",
+                user_confirmed=request.user_confirmed,
+            )
+            tools_executed.append(res_restart)
+            if res_restart.success:
+                known_facts.append("Deployment 'model-inference' in namespace 'mlops-prod' restarted successfully.")
+                reply = "Deployment rolling restart initiated successfully with confirmed authorization."
+            else:
+                uncertainties.append(f"Restart rejected: {res_restart.error}")
+                reply = f"Operation Rejected: {res_restart.error}"
+            return AgentChatResponse(
+                reply=reply,
+                known_facts=known_facts,
+                uncertainties=uncertainties,
+                recommended_actions=recommended_actions,
+                tools_executed=tools_executed,
+                evidence=evidence,
+                request_id=request_id,
+            )
+
+        if "trigger" in query and "training" in query:
+            res_trigger = self.execute_tool(
+                "airflow_trigger_training_dag",
+                dag_id="churn_model_training_pipeline",
+                user_confirmed=request.user_confirmed,
+            )
+            tools_executed.append(res_trigger)
+            if res_trigger.success:
+                known_facts.append("Airflow DAG 'churn_model_training_pipeline' triggered successfully.")
+                reply = "Training pipeline DAG triggered successfully."
+            else:
+                uncertainties.append(f"Trigger rejected: {res_trigger.error}")
+                reply = f"Operation Rejected: {res_trigger.error}"
+            return AgentChatResponse(
+                reply=reply,
+                known_facts=known_facts,
+                uncertainties=uncertainties,
+                recommended_actions=recommended_actions,
+                tools_executed=tools_executed,
+                evidence=evidence,
+                request_id=request_id,
+            )
 
         # Mandatory Integration Scenario / Retraining Inquiries
         is_retrain_or_multi = any(
@@ -114,7 +471,7 @@ class MLOpsAgentOrchestrator:
         )
 
         # 1. Query MLflow
-        if is_retrain_or_multi or "mlflow" in query or "experiment" in query or "compare" in query or "run" in query:
+        if is_retrain_or_multi or any(k in query for k in ["mlflow", "experiment", "compare", "run"]):
             best_res = self.execute_tool("mlflow_get_best_run", metric_name="f1_score")
             tools_executed.append(best_res)
             if best_res.success and best_res.data:
@@ -145,7 +502,7 @@ class MLOpsAgentOrchestrator:
                 )
 
         # 2. Query DVC
-        if is_retrain_or_multi or "dvc" in query or "dataset" in query or "version" in query or "provenance" in query:
+        if is_retrain_or_multi or any(k in query for k in ["dvc", "dataset", "version", "provenance", "lineage"]):
             dvc_info = self.execute_tool("dvc_get_dataset_version_info", version_or_tag="HEAD")
             tools_executed.append(dvc_info)
             if dvc_info.success and dvc_info.data:
@@ -176,7 +533,7 @@ class MLOpsAgentOrchestrator:
                 )
 
         # Query DVC reproduction commands if asked
-        if "reproduce" in query or "reproduction" in query or "how do i" in query:
+        if any(k in query for k in ["reproduce", "reproduction", "how do i"]):
             repro_tag = "v1.0"
             for tag_candidate in ["v1.0", "v2.0", "main"]:
                 if tag_candidate in query:
@@ -194,87 +551,66 @@ class MLOpsAgentOrchestrator:
                     )
                 )
                 known_facts.append(
-                    f"To reproduce tag '{repro_tag}' (DVC hash: {repro_res.data.get('dvc_data_hash')}): Run "
+                    f"To reproduce tag '{repro_tag}' (DVC hash: {repro_res.data.get('dvc_data_hash', 'unknown')}): Run "
                     + " && ".join(cmds)
                 )
-                recommended_actions.append(
-                    f"To recreate environment and data for '{repro_tag}': execute commands `{' && '.join(cmds)}`"
-                )
+                recommended_actions.append(f"Execute safe checkout sequence: {cmds[0]} && {cmds[1]} && {cmds[2]}.")
 
         # 3. Query Kubernetes
-        if (
-            is_retrain_or_multi
-            or "kubernetes" in query
-            or "k8s" in query
-            or "pod" in query
-            or "deployment" in query
-            or "degraded" in query
-            or "unavailable" in query
-        ):
-            k8s_dep = self.execute_tool("k8s_get_deployed_app_version", namespace="mlops-prod")
-            tools_executed.append(k8s_dep)
-            if k8s_dep.success and k8s_dep.data:
-                k_data = k8s_dep.data
+        if is_retrain_or_multi or any(k in query for k in ["kubernetes", "k8s", "pod", "deployment", "service"]):
+            k8s_ver = self.execute_tool("k8s_get_deployed_app_version", namespace="mlops-prod")
+            tools_executed.append(k8s_ver)
+            if k8s_ver.success and k8s_ver.data:
+                k_data = k8s_ver.data
                 known_facts.append(
-                    f"Kubernetes deployment '{k_data.get('deployment_name')}' in namespace '{k_data.get('namespace')}' "
-                    f"is running model version '{k_data.get('model_version')}' linked to MLflow run '{k_data.get('mlflow_run_id')}'."
+                    f"Kubernetes deployment '{k_data.get('deployment_name')}' in namespace 'mlops-prod' "
+                    f"is running image '{k_data.get('image')}' (model_version: '{k_data.get('model_version')}', "
+                    f"MLflow run ID: '{k_data.get('mlflow_run_id')}')."
                 )
                 evidence.append(
                     EvidenceItem(
                         source="Kubernetes",
-                        summary="Currently deployed app and model version",
+                        summary="Live deployed inference service environment and image tag",
                         details=k_data,
                     )
                 )
             else:
-                uncertainties.append(f"Kubernetes cluster state inaccessible: {k8s_dep.error}")
+                uncertainties.append(f"Kubernetes deployment status unavailable: {k8s_ver.error}")
 
-            k8s_pods = self.execute_tool("k8s_get_unhealthy_pods_and_events", namespace="mlops-prod")
-            tools_executed.append(k8s_pods)
-            if k8s_pods.success and k8s_pods.data:
-                unhealthy = k8s_pods.data.get("unhealthy_pods", [])
-                warn_events = k8s_pods.data.get("warning_events", [])
-                if unhealthy or warn_events:
-                    known_facts.append(
-                        f"Kubernetes diagnostics detected {len(unhealthy)} unhealthy pod(s) and {len(warn_events)} warning event(s)."
+            k8s_diag = self.execute_tool("k8s_get_unhealthy_pods_and_events", namespace="mlops-prod")
+            tools_executed.append(k8s_diag)
+            if k8s_diag.success and k8s_diag.data:
+                evidence.append(
+                    EvidenceItem(
+                        source="Kubernetes Diagnostics",
+                        summary="Unhealthy pods and warning event analysis",
+                        details=k8s_diag.data,
                     )
-                    evidence.append(
-                        EvidenceItem(
-                            source="Kubernetes Diagnostics",
-                            summary="Unhealthy pods and cluster warning events",
-                            details=k8s_pods.data,
-                        )
-                    )
-                else:
-                    known_facts.append("Kubernetes application pods are healthy (0 unhealthy pods, 0 warning events).")
+                )
 
         # 4. Query Airflow
-        if (
-            is_retrain_or_multi
-            or "airflow" in query
-            or "pipeline" in query
-            or "dag" in query
-            or "workflow" in query
-            or "fail" in query
-        ):
-            af_runs = self.execute_tool("airflow_get_dag_runs", dag_id="churn_model_training_pipeline")
+        if is_retrain_or_multi or any(k in query for k in ["airflow", "dag", "pipeline", "why did", "fail"]):
+            af_runs = self.execute_tool("airflow_get_dag_runs", dag_id="churn_model_training_pipeline", limit=3)
             tools_executed.append(af_runs)
             if af_runs.success and af_runs.data:
-                runs = af_runs.data.get("runs", [])
+                runs = af_runs.data.get("dag_runs", [])
                 if runs:
-                    latest_state = runs[0].get("state")
-                    latest_id = runs[0].get("dag_run_id")
-                    known_facts.append(f"Latest Airflow training pipeline run '{latest_id}' state is '{latest_state}'.")
+                    latest = runs[0]
+                    latest_id = latest.get("dag_run_id")
+                    latest_state = latest.get("state")
+                    known_facts.append(
+                        f"Latest Airflow pipeline run '{latest_id}' finished with state '{latest_state}'."
+                    )
                     evidence.append(
                         EvidenceItem(
                             source="Airflow",
-                            summary="Recent pipeline execution runs and state",
+                            summary="Recent pipeline execution runs and terminal states",
                             details=af_runs.data,
                         )
                     )
 
-                    # If failed, look for failed task logs
-                    if latest_state in ("failed", "queued"):
+                    # If failed run, inspect failed task logs
+                    if latest_state == "failed":
                         tasks_res = self.execute_tool(
                             "airflow_get_task_instances",
                             dag_id="churn_model_training_pipeline",
@@ -309,11 +645,6 @@ class MLOpsAgentOrchestrator:
 
         # Retraining Logic Synthesis
         if is_retrain_or_multi:
-            # Check if retraining is necessary
-            # Evidence: check if dataset changed or deployed model is outdated
-            reasons = []
-
-            # Compare deployed model vs best run
             best_run_id = None
             for e in evidence:
                 if e.source == "MLflow" and e.details:
@@ -330,7 +661,7 @@ class MLOpsAgentOrchestrator:
                     f"to Kubernetes (currently running '{deployed_run_id}'). Roll out updated model image rather than retraining."
                 )
 
-            # Check dataset status
+            reasons: list[str] = []
             for e in evidence:
                 if e.source == "DVC Diff" and e.details and e.details.get("hash_changed"):
                     reasons.append("New dataset version (v2.0) contains hash modifications not fully benchmarked.")
@@ -350,29 +681,39 @@ class MLOpsAgentOrchestrator:
                 "Do not trigger automatic retraining without operational review and user confirmation."
             )
 
-        # Handle specific failure diagnoses
-        if "prediction api" in query and ("degraded" in query or "unavailable" in query):
-            # Kubernetes failure diagnosis
-            unhealthy_pods = []
+        # Synthesize Grounded Reply
+        if not known_facts and uncertainties:
+            # Complete infrastructure offline case: strictly report uncertainties without inventing operational facts
+            reply = (
+                "### Infrastructure Status Assessment: Services Unreachable\n\n"
+                "**Operational Status:** Unable to determine system state because targeted monitoring tools "
+                "are currently unreachable or returned errors.\n\n"
+                "**Identified Uncertainties:**\n"
+                + "\n".join(f"- {u}" for u in uncertainties)
+                + "\n\n**Recommended Actions:**\n"
+                + "- Restore network connectivity to MLflow, Airflow, and Kubernetes endpoints.\n"
+                + "- Re-run operational status inquiry after cluster contexts are verified."
+            )
+        elif "prediction api" in query and any(k in query for k in ["degraded", "unavailable"]):
+            unhealthy_pods: list[dict[str, Any]] = []
             for e in evidence:
                 if e.source == "Kubernetes Diagnostics" and e.details:
                     unhealthy_pods = e.details.get("unhealthy_pods", [])
             if unhealthy_pods:
                 reasons_str = "; ".join(f"{p['pod_name']}: {', '.join(p['reasons'])}" for p in unhealthy_pods)
                 reply = (
-                    f"### Diagnosis: Prediction API Degraded\n\n"
+                    "### Diagnosis: Prediction API Degraded\n\n"
                     f"**Identified Cause:** Kubernetes pods in `mlops-prod` are in an unhealthy state:\n"
                     f"{reasons_str}\n\n"
-                    f"**Recommended Recovery:** Roll back the broken image deployment via `kubectl rollout undo deployment/model-inference -n mlops-prod`."
+                    "**Recommended Recovery:** Roll back the broken image deployment via "
+                    "`kubectl rollout undo deployment/model-inference -n mlops-prod`."
                 )
             else:
                 reply = (
                     "### Diagnosis: Prediction API Inspection\n\n"
-                    "All application pods in namespace `mlops-prod` are currently reporting `1/1 Running` with 0 restart events. "
-                    "Service endpoint is responding normally."
+                    "All application pods in namespace `mlops-prod` are currently reporting healthy with 0 restart events."
                 )
-        elif "why did" in query and "fail" in query and ("pipeline" in query or "training" in query):
-            # Airflow failure diagnosis
+        elif "why did" in query and "fail" in query:
             reply = (
                 "### Diagnosis: Training Pipeline Failure\n\n"
                 "**Identified Cause:** The latest Airflow training pipeline failed during execution.\n"
@@ -381,30 +722,31 @@ class MLOpsAgentOrchestrator:
             for e in evidence:
                 if e.source == "Airflow Logs" and e.details:
                     has_logs = True
-                    reply += f"\n**Task Diagnostic:** Task `{e.details.get('task_id')}` failed with logs:\n```\n{e.details.get('log_snippet', '')[-500:]}\n```\n"
+                    log_snip = e.details.get("log_snippet", "")
+                    # Extract error lines safely from actual log
+                    error_lines = [
+                        ln.strip()
+                        for ln in log_snip.split("\n")
+                        if any(w in ln for w in ["Error:", "Exception:", "ValueError", "FAILED"])
+                    ]
+                    log_summary = "; ".join(error_lines[-3:]) if error_lines else log_snip[-300:]
+                    reply += (
+                        f"\n**Task Diagnostic:** Task `{e.details.get('task_id')}` failed with error:\n"
+                        f"```\n{log_summary}\n```\n"
+                    )
             if not has_logs:
                 reply += (
-                    "\n**Validation Gate Analysis:** The pipeline was aborted because dataset validation detected "
-                    "a null ratio exceeding the strict 5.0% threshold (40.75% corrupted null values found across "
-                    "`tenure_months`, `monthly_charges`, and `total_charges`).\n\n"
-                    "**Recovery Action:** Revert corrupted data and restore clean DVC version via `git checkout data/dataset.csv.dvc && dvc checkout`."
+                    "\n**Diagnostic Note:** Detailed task logs could not be retrieved from Airflow. "
+                    "Please verify Airflow webserver connectivity to inspect task logs directly."
                 )
-                if not any("40.75%" in f for f in known_facts):
-                    known_facts.append(
-                        "Pipeline Stage 1 (validate_dataset) failed: Null ratio 40.75% exceeded allowed threshold 5.0%."
-                    )
-                if not any("Restore dataset" in a for a in recommended_actions):
-                    recommended_actions.append(
-                        "Restore clean dataset pointer with 'git checkout data/dataset.csv.dvc && dvc checkout'."
-                    )
-        elif "reproduce" in query or "reproduction" in query:
+        elif any(k in query for k in ["reproduce", "reproduction"]):
             reply = (
                 "### Provenance & Reproduction Guide\n\n"
                 "**Lineage & Reproduction Steps:**\n\n"
                 + "\n".join(f"- {fact}" for fact in known_facts)
                 + "\n\n"
                 + (
-                    "**Uncertainties Identified:**\n" + "\n".join(f"- {u}" for u in uncertainties) + "\n\n"
+                    "**Uncertainties:**\n" + "\n".join(f"- {u}" for u in uncertainties) + "\n\n"
                     if uncertainties
                     else ""
                 )
@@ -412,15 +754,14 @@ class MLOpsAgentOrchestrator:
                 + "\n".join(f"- {act}" for act in recommended_actions)
             )
         else:
-            # General Evidence-Based Summary
             reply = (
                 "### Operational MLOps Status Assessment\n\n"
                 "**Overview:** Evaluated live infrastructure across MLflow, DVC, Airflow, and Kubernetes.\n\n"
-                "**Key Findings:**\n"
+                "**Known Facts:**\n"
                 + "\n".join(f"- {fact}" for fact in known_facts)
                 + "\n\n"
                 + (
-                    "**Uncertainties Identified:**\n" + "\n".join(f"- {u}" for u in uncertainties) + "\n\n"
+                    "**Uncertainties:**\n" + "\n".join(f"- {u}" for u in uncertainties) + "\n\n"
                     if uncertainties
                     else ""
                 )

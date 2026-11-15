@@ -229,14 +229,19 @@ def get_reproduction_commands(version_or_tag: str = "v1.0") -> ToolResult:
     start_time = time.perf_counter()
     tool_name = "dvc_get_reproduction_commands"
     try:
+        # Fetch data hash and commit provenance for the specified version
+        info_res = get_dataset_version_info(version_or_tag)
+        dvc_hash = info_res.data.get("dvc_data_hash", "unknown") if info_res.success and info_res.data else "unknown"
+        git_commit = info_res.data.get("git_commit", "unknown") if info_res.success and info_res.data else "unknown"
+
         commands = [
             f"git checkout {version_or_tag}",
             "dvc pull",
             "dvc checkout",
         ]
         explanation = (
-            f"To reproduce dataset version '{version_or_tag}', check out the matching Git commit or tag, "
-            f"then pull the underlying dataset blob from the configured DVC remote and check it out into the workspace."
+            f"To reproduce dataset version '{version_or_tag}' (DVC md5: {dvc_hash}, Git commit: {git_commit}), "
+            f"check out the matching Git reference and sync data from the configured DVC storage remote."
         )
         duration_ms = (time.perf_counter() - start_time) * 1000
         return ToolResult(
@@ -244,6 +249,8 @@ def get_reproduction_commands(version_or_tag: str = "v1.0") -> ToolResult:
             tool_name=tool_name,
             data={
                 "target_version": version_or_tag,
+                "git_commit": git_commit,
+                "dvc_data_hash": dvc_hash,
                 "commands": commands,
                 "explanation": explanation,
             },

@@ -13,10 +13,19 @@ from agent.schemas import ToolResult
 from agent.telemetry import telemetry
 
 
+def _get_http_client(timeout: float = 6.0) -> httpx.Client:
+    """Create an HTTP client with retry transport for resilient Airflow connection."""
+    transport = httpx.HTTPTransport(retries=2)
+    return httpx.Client(transport=transport, timeout=timeout)
+
+
 def _get_auth_headers() -> dict[str, str]:
     """Retrieve Bearer JWT auth token from Airflow 3 /auth/token or fallback."""
     if settings.airflow_api_token:
         return {"Authorization": f"Bearer {settings.airflow_api_token}"}
+
+    if not settings.airflow_password:
+        return {}
 
     try:
         # Request JWT token from Airflow 3 simple auth manager
@@ -25,15 +34,16 @@ def _get_auth_headers() -> dict[str, str]:
             "username": settings.airflow_username,
             "password": settings.airflow_password,
         }
-        resp = httpx.post(token_url, json=payload, timeout=5.0)
-        if resp.status_code == 201:
-            token = resp.json().get("access_token")
-            if token:
-                return {"Authorization": f"Bearer {token}"}
+        with _get_http_client(timeout=5.0) as client:
+            resp = client.post(token_url, json=payload)
+            if resp.status_code == 201:
+                token = resp.json().get("access_token")
+                if token:
+                    return {"Authorization": f"Bearer {token}"}
     except Exception as e:
         telemetry.log_event("AUTH_WARN", tool_name="airflow_auth", extra={"warning": str(e)})
 
-    # Fallback to basic auth header
+    # Fallback to empty header
     return {}
 
 
@@ -226,42 +236,58 @@ def get_failed_task_logs(
     dag_id: str,
     dag_run_id: str,
     task_id: str,
+    try_number: int = 1,
 ) -> ToolResult:
-    """Retrieve execution logs and stack trace diagnostics for a failed task."""
+    """Retrieve execution logs and stack trace diagnostics for a failed task, trying specified try_number with fallback."""
     start_time = time.perf_counter()
     tool_name = "airflow_get_failed_task_logs"
     try:
         headers = _get_auth_headers()
         base = settings.airflow_base_url.rstrip("/")
-        # In Airflow 3: /api/v2/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/logs
-        url = f"{base}/api/v2/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/logs/1"
 
-        auth = (settings.airflow_username, settings.airflow_password) if not headers.get("Authorization") else None
-        res = httpx.get(url, headers=headers, auth=auth, timeout=6.0)
+        urls_to_try = [
+            f"{base}/api/v2/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/logs/{try_number}",
+        ]
+        if try_number != 1:
+            urls_to_try.append(f"{base}/api/v2/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances/{task_id}/logs/1")
 
-        if res.status_code == 200:
-            content = res.text
-            duration_ms = (time.perf_counter() - start_time) * 1000
-            return ToolResult(
-                success=True,
-                tool_name=tool_name,
-                data={
-                    "dag_id": dag_id,
-                    "dag_run_id": dag_run_id,
-                    "task_id": task_id,
-                    "log_snippet": content[-3000:],  # Return tail of the log
-                },
-                error=None,
-                duration_ms=duration_ms,
-            )
+        auth = (
+            (settings.airflow_username, settings.airflow_password)
+            if not headers.get("Authorization") and settings.airflow_password
+            else None
+        )
 
-        # Fallback simulation/inspection
+        last_error = ""
+        with _get_http_client(timeout=6.0) as client:
+            for url in urls_to_try:
+                try:
+                    res = client.get(url, headers=headers, auth=auth)
+                    if res.status_code == 200:
+                        content = res.text
+                        duration_ms = (time.perf_counter() - start_time) * 1000
+                        return ToolResult(
+                            success=True,
+                            tool_name=tool_name,
+                            data={
+                                "dag_id": dag_id,
+                                "dag_run_id": dag_run_id,
+                                "task_id": task_id,
+                                "try_number": try_number,
+                                "log_snippet": content[-3000:],  # Return tail of the log
+                            },
+                            error=None,
+                            duration_ms=duration_ms,
+                        )
+                    last_error = f"HTTP {res.status_code}: {res.text[:200]}"
+                except Exception as req_err:
+                    last_error = str(req_err)
+
         duration_ms = (time.perf_counter() - start_time) * 1000
         return ToolResult(
             success=False,
             tool_name=tool_name,
             data=None,
-            error=f"Could not retrieve task logs (HTTP {res.status_code}): {res.text[:200]}",
+            error=f"Could not retrieve task logs: {last_error}",
             duration_ms=duration_ms,
         )
     except Exception as e:

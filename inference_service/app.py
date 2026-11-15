@@ -5,12 +5,25 @@ from __future__ import annotations
 import os
 from typing import Literal
 
+import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 MODEL_VERSION = os.environ.get("MODEL_VERSION", "v1.0")
 MLFLOW_RUN_ID = os.environ.get("MLFLOW_RUN_ID", "local-run-init")
 SERVICE_NAME = os.environ.get("SERVICE_NAME", "churn-inference-service")
+MODEL_PATH = os.environ.get("MODEL_PATH", "models/model.joblib")
+
+_model = None
+try:
+    import joblib
+
+    for p in [MODEL_PATH, "models/model.joblib", "model.joblib"]:
+        if os.path.exists(p):
+            _model = joblib.load(p)
+            break
+except Exception:
+    _model = None
 
 app = FastAPI(
     title="MLOps Customer Churn Prediction Service",
@@ -59,20 +72,26 @@ def health_check() -> HealthResponse:
 def predict(request: PredictionRequest) -> PredictionResponse:
     """Predict customer churn based on input telemetry and behavioral features."""
     try:
-        # Heuristic / linear surrogate calibrated to match trained model weights
-        logit = (
-            -1.5
-            - 0.04 * request.tenure_months
-            + 0.02 * request.monthly_charges
-            + 0.4 * (1.0 if request.contract_type == "month-to-month" else 0.0)
-            - 0.8 * (1.0 if request.contract_type == "two-year" else 0.0)
-            + 0.5 * (1.0 if request.internet_service == "fiber-optic" else 0.0)
-            - 0.4 * (1.0 if request.tech_support == "yes" else 0.0)
-            + 0.35 * request.num_support_tickets
-        )
-        prob = float(1.0 / (1.0 + float(2.718281828459045 ** (-logit))))
-        prob = max(0.0, min(1.0, prob))
-        pred = 1 if prob >= 0.5 else 0
+        if _model is not None:
+            feat_df = pd.DataFrame([request.model_dump()])
+            proba = float(_model.predict_proba(feat_df)[0][1])
+            pred = int(_model.predict(feat_df)[0])
+            prob = max(0.0, min(1.0, proba))
+        else:
+            # Heuristic / linear surrogate calibrated to match trained model weights
+            logit = (
+                -1.5
+                - 0.04 * request.tenure_months
+                + 0.02 * request.monthly_charges
+                + 0.4 * (1.0 if request.contract_type == "month-to-month" else 0.0)
+                - 0.8 * (1.0 if request.contract_type == "two-year" else 0.0)
+                + 0.5 * (1.0 if request.internet_service == "fiber-optic" else 0.0)
+                - 0.4 * (1.0 if request.tech_support == "yes" else 0.0)
+                + 0.35 * request.num_support_tickets
+            )
+            prob = float(1.0 / (1.0 + float(2.718281828459045 ** (-logit))))
+            prob = max(0.0, min(1.0, prob))
+            pred = 1 if prob >= 0.5 else 0
 
         risk = "HIGH" if prob >= 0.65 else ("MEDIUM" if prob >= 0.35 else "LOW")
 

@@ -1,6 +1,6 @@
 # Production-Ready MLOps AI Agent
 
-[![MLOps AI Agent CI](https://github.com/AHSANooo/assignment-03-mlops-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/AHSANooo/assignment-03-mlops-agent/actions/workflows/ci.yml)
+[![MLOps AI Agent CI](https://github.com/AHSANooo/mlops-control-plane-agent/actions/workflows/ci.yml/badge.svg)](https://github.com/AHSANooo/mlops-control-plane-agent/actions/workflows/ci.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/release/python-3120/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Checked with mypy](https://www.mypy-lang.org/static/mypy_badge.svg)](https://mypy-lang.org/)
@@ -8,8 +8,8 @@
 
 An intelligent, multi-tool conversational AI assistant that interfaces directly with production MLOps infrastructure: **DVC** for data lineage, **MLflow** for experiment tracking and model registration, **Apache Airflow 3** for training workflow orchestration, and **Kubernetes (`kind`)** for live microservice diagnostics and remediation.
 
-Complete architectural details and flowcharts are documented in [architecture.md](file:///d:/Uni/MLOps/Assignment03/architecture.md).  
-Detailed empirical evaluation and failure injection logs are documented in [evaluation_report.md](file:///d:/Uni/MLOps/Assignment03/reports/evaluation_report.md).
+Complete architectural details and flowcharts are documented in [architecture.md](architecture.md).  
+Detailed empirical evaluation and failure injection logs are documented in [evaluation_report.md](reports/evaluation_report.md).
 
 ---
 

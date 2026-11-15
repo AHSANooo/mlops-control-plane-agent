@@ -1,0 +1,28 @@
+stages:
+  validate:
+    cmd: python training/validate.py --data data/dataset.csv --max-null-ratio 0.05
+    deps:
+      - training/validate.py
+      - data/dataset.csv
+
+  preprocess:
+    cmd: python training/preprocess.py --input data/dataset.csv --train-out data/train.parquet --test-out data/test.parquet --test-size 0.2 --seed 42
+    deps:
+      - training/preprocess.py
+      - data/dataset.csv
+    outs:
+      - data/train.parquet
+      - data/test.parquet
+
+  train:
+    cmd: python training/train.py --train-data data/train.parquet --test-data data/test.parquet --config params.yaml
+    deps:
+      - training/train.py
+      - data/train.parquet
+      - data/test.parquet
+      - params.yaml
+    params:
+      - params.yaml:
+          - training.n_estimators
+          - training.max_depth
+          - quality_gate.min_f1
