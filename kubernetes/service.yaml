@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: model-inference-service
+  namespace: mlops-prod
+spec:
+  type: ClusterIP
+  selector:
+    app: model-inference
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP

@@ -61,6 +61,8 @@ airflow/standalone_admin_password.txt
 # DVC data files (tracked via DVC pointers, not Git)
 data/dataset.csv
 data/*.csv
+data/*.parquet
+*.parquet
 !data/.gitkeep
 /tmp/dvc-storage/
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 from typing import Any
+
 import pandas as pd
 import yaml
 
@@ -36,9 +37,7 @@ def validate_dataset(config_path: str | Path = "params.yaml") -> dict[str, Any]:
     # 1. Check required columns
     missing_cols = [c for c in required_cols if c not in df.columns]
     if missing_cols:
-        raise ValueError(
-            f"Validation failed: Dataset is missing required columns: {missing_cols}"
-        )
+        raise ValueError(f"Validation failed: Dataset is missing required columns: {missing_cols}")
 
     # 2. Check null ratios
     null_ratios = df[required_cols].isna().mean()

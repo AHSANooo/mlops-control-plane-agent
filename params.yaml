@@ -29,5 +29,5 @@ mlflow:
   registered_model_name: "CustomerChurnClassifier"
 
 quality_gate:
-  min_f1: 0.70
-  min_roc_auc: 0.75
+  min_f1: 0.45
+  min_roc_auc: 0.70

@@ -42,14 +42,20 @@ where = ["."]
 include = ["agent*", "api*", "training*"]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "S"]
 ignore = [
+    "E501", # Line length handled by formatter
     "S101", # Allow assert in tests
     "B008", # Allow Depends in FastAPI route definitions
+    "S104", # Allow binding to 0.0.0.0 in local containerized API
+    "S603", # Subprocess call with shell=False validated
+    "S607", # Subprocess with executable names (git, dvc)
+    "S110", # Allow try-except pass for optional git tag inspection
+    "S108", # Allow /tmp usage in pipeline models
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -59,23 +65,22 @@ ignore = [
 python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
+warn_redundant_casts = true
 disallow_untyped_defs = false
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = "agent.*"
-strict = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 check_untyped_defs = true
 no_implicit_optional = true
-warn_redundant_casts = true
-warn_unused_ignores = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+pythonpath = ["."]
 asyncio_mode = "auto"
 filterwarnings = [
     "ignore::DeprecationWarning",

@@ -2,14 +2,13 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 import os
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
+
 import yaml
-
 from airflow.decorators import dag, task
-
 
 DEFAULT_ARGS = {
     "owner": "mlops-platform",
@@ -186,11 +185,13 @@ def churn_training_pipeline() -> None:
     def task_evaluate_and_log_mlflow(train_result: dict[str, Any]) -> dict[str, Any]:
         """Evaluate model against test split and log parameters, metrics, tags to MLflow."""
         import subprocess
+
         import joblib
-        import mlflow
         import mlflow.sklearn
         import pandas as pd
         from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
+
+        import mlflow
 
         config_path = Path(train_result["config_path"])
         with open(config_path, encoding="utf-8") as f:
@@ -258,9 +259,7 @@ def churn_training_pipeline() -> None:
             "MLFLOW_TRACKING_URI",
             cfg.get("mlflow", {}).get("tracking_uri", "http://mlflow:5000"),
         )
-        experiment_name = cfg.get("mlflow", {}).get(
-            "experiment_name", "customer-churn-prediction"
-        )
+        experiment_name = cfg.get("mlflow", {}).get("experiment_name", "customer-churn-prediction")
 
         mlflow.set_tracking_uri(tracking_uri)
         mlflow.set_experiment(experiment_name)
@@ -290,7 +289,11 @@ def churn_training_pipeline() -> None:
                     "pipeline": "airflow-3-taskflow",
                 }
             )
-            mlflow.sklearn.log_model(sk_model=clf, artifact_path="model")
+            mlflow.sklearn.log_model(
+                sk_model=clf,
+                artifact_path="model",
+                serialization_format="cloudpickle",
+            )
 
         print(f"Logged MLflow run {run_id}: F1={f1:.4f}, AUC={roc:.4f}")
         return {
@@ -322,9 +325,7 @@ def churn_training_pipeline() -> None:
                 f"Model registration blocked for run {run_id}."
             )
 
-        registered_name = cfg.get("mlflow", {}).get(
-            "registered_model_name", "CustomerChurnClassifier"
-        )
+        registered_name = cfg.get("mlflow", {}).get("registered_model_name", "CustomerChurnClassifier")
         mlflow.set_tracking_uri(tracking_uri)
         model_uri = f"runs:/{run_id}/model"
         reg = mlflow.register_model(model_uri=model_uri, name=registered_name)

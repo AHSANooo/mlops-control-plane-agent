@@ -3,16 +3,17 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import subprocess
+from pathlib import Path
 from typing import Any
-import mlflow
+
 import mlflow.sklearn
-import numpy as np
 import pandas as pd
+import yaml
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score
-import yaml
+
+import mlflow
 
 
 def load_config(config_path: str | Path = "params.yaml") -> dict[str, Any]:
@@ -97,9 +98,7 @@ def train_model(config_path: str | Path = "params.yaml") -> dict[str, Any]:
     target_col = dataset_cfg.get("target_column", "churn")
 
     if not train_path.exists() or not test_path.exists():
-        raise FileNotFoundError(
-            f"Processed data not found at {train_path} or {test_path}. Run preprocessing first."
-        )
+        raise FileNotFoundError(f"Processed data not found at {train_path} or {test_path}. Run preprocessing first.")
 
     train_df = pd.read_parquet(train_path)
     test_df = pd.read_parquet(test_path)
@@ -169,10 +168,11 @@ def train_model(config_path: str | Path = "params.yaml") -> dict[str, Any]:
         # Log tags
         mlflow.set_tags(tags)
 
-        # Log model
+        # Log model with cloudpickle serialization for robust sklearn tree loading
         mlflow.sklearn.log_model(
             sk_model=clf,
             artifact_path="model",
+            serialization_format="cloudpickle",
             registered_model_name=None,  # Registration handled by quality gate
         )
 
@@ -199,9 +199,7 @@ def apply_quality_gate(
     config = load_config(config_path)
     gate_cfg = config.get("quality_gate", {})
     min_f1 = float(gate_cfg.get("min_f1", 0.70))
-    registered_name = config.get("mlflow", {}).get(
-        "registered_model_name", "CustomerChurnClassifier"
-    )
+    registered_name = config.get("mlflow", {}).get("registered_model_name", "CustomerChurnClassifier")
     tracking_uri = config.get("mlflow", {}).get("tracking_uri", "http://localhost:5000")
 
     if f1 < min_f1:

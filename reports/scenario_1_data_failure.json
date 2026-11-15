@@ -1,0 +1,17 @@
+{
+  "scenario": "Data / Pipeline Failure Injection",
+  "validation_failure_detected": true,
+  "validation_output": "Traceback (most recent call last):\n  File \"/mnt/d/Uni/MLOps/Assignment03/training/validate.py\", line 76, in <module>\n    main()\n  File \"/mnt/d/Uni/MLOps/Assignment03/training/validate.py\", line 72, in main\n    validate_dataset(args.config)\n  File \"/mnt/d/Uni/MLOps/Assignment03/training/validate.py\", line 48, in validate_dataset\n    raise ValueError(\nValueError: Validation failed: Maximum column null ratio 40.75% exceeds allowed threshold of 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}\n",
+  "agent_query": "Why did the latest training pipeline fail?",
+  "agent_response": "### Diagnosis: Training Pipeline Failure\n\n**Identified Cause:** The latest Airflow training pipeline failed during execution.\n\n**Validation Gate Analysis:** The pipeline was aborted because dataset validation detected a null ratio exceeding the strict 5.0% threshold (40.75% corrupted null values found across `tenure_months`, `monthly_charges`, and `total_charges`).\n\n**Recovery Action:** Revert corrupted data and restore clean DVC version via `git checkout data/dataset.csv.dvc && dvc checkout`.",
+  "known_facts": [
+    "Pipeline Stage 1 (validate_dataset) failed: Null ratio 40.75% exceeded allowed threshold 5.0%."
+  ],
+  "uncertainties": [
+    "Airflow workflow status unreachable: Failed to fetch DAG runs: Server disconnected without sending a response."
+  ],
+  "recommended_actions": [
+    "Restore clean dataset pointer with 'git checkout data/dataset.csv.dvc && dvc checkout'."
+  ],
+  "evidence": []
+}

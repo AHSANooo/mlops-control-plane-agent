@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from pathlib import Path
+
 import numpy as np
 import pandas as pd
 
@@ -37,9 +38,7 @@ def generate_churn_dataset(
     tech_support = rng.choice(tech_support_choices, size=n_rows, p=[0.3, 0.7])
 
     num_support_tickets = rng.poisson(lam=1.5, size=n_rows)
-    total_charges = np.round(
-        tenure_months * monthly_charges * rng.uniform(0.9, 1.05, size=n_rows), 2
-    )
+    total_charges = np.round(tenure_months * monthly_charges * rng.uniform(0.9, 1.05, size=n_rows), 2)
 
     # Churn probability based on realistic business rules
     logit = (

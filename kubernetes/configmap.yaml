@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: model-inference-config
+  namespace: mlops-prod
+data:
+  MODEL_VERSION: "v1.0"
+  MLFLOW_RUN_ID: "run-v1-prod"
+  SERVICE_NAME: "churn-inference-service"

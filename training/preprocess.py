@@ -5,9 +5,10 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 from typing import Any
+
 import pandas as pd
-from sklearn.model_selection import train_test_split
 import yaml
+from sklearn.model_selection import train_test_split
 
 
 def load_config(config_path: str | Path = "params.yaml") -> dict[str, Any]:
