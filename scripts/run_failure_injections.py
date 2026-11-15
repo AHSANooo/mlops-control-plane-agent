@@ -43,7 +43,7 @@ def run_scenario_1_pipeline_failure() -> dict:
     print(f"Airflow trigger: {trigger_res.success}, data: {trigger_res.data}, error: {trigger_res.error}")
 
     # Wait for Airflow scheduler to execute the validation stage
-    for _ in range(6):
+    for _ in range(12):
         time.sleep(5)
         runs_res = get_dag_runs(dag_id="churn_model_training_pipeline", limit=1)
         if runs_res.success and runs_res.data:
@@ -64,7 +64,7 @@ def run_scenario_1_pipeline_failure() -> dict:
 
     # 5. Restore dataset
     restore_proc = run_cmd(["git", "checkout", "data/dataset.csv.dvc"])
-    dvc_restore = run_cmd(["dvc", "checkout", "-f"])
+    dvc_restore = run_cmd(["dvc", "checkout", "data/dataset.csv.dvc", "-f"])
     print(f"Dataset restored: git_rc={restore_proc.returncode}, dvc_rc={dvc_restore.returncode}")
 
     result = {
