@@ -633,13 +633,21 @@ class MLOpsAgentOrchestrator:
                         if tasks_res.success and tasks_res.data:
                             failed_tasks = tasks_res.data.get("failed_tasks", [])
                             upstream_failed = tasks_res.data.get("upstream_failed_tasks", [])
+                            tasks_summary = tasks_res.data.get("tasks", [])
+                            task_tries = {
+                                t.get("task_id"): int(t.get("try_number") or 1)
+                                for t in tasks_summary
+                                if isinstance(t, dict) and t.get("task_id")
+                            }
                             if failed_tasks:
                                 for ft in failed_tasks:
+                                    actual_try = task_tries.get(ft, 1)
                                     log_res = self.execute_tool(
                                         "airflow_get_failed_task_logs",
                                         dag_id="churn_model_training_pipeline",
                                         dag_run_id=latest_id,
                                         task_id=ft,
+                                        try_number=actual_try,
                                     )
                                     tools_executed.append(log_res)
                                     evidence.append(
@@ -653,8 +661,9 @@ class MLOpsAgentOrchestrator:
                                         f"Airflow task '{ft}' failed during execution of pipeline run '{latest_id}'."
                                     )
                             if upstream_failed:
+                                skipped_tasks = ", ".join(upstream_failed)
                                 known_facts.append(
-                                    f"Downstream Airflow tasks {upstream_failed} were aborted due to upstream failure."
+                                    f"Downstream tasks skipped due to upstream failure: {skipped_tasks}."
                                 )
                 else:
                     uncertainties.append("No recorded DAG runs found in Airflow.")

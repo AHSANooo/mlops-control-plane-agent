@@ -5,7 +5,7 @@
     "tool_name": "k8s_restart_deployment",
     "data": null,
     "error": "SAFETY REJECTION: Cluster state mutation rejected. Restarting deployments modifies live cluster workloads and requires explicit user confirmation (user_confirmed=True).",
-    "duration_ms": 0.0011000010999850929
+    "duration_ms": 0.0012000000424450263
   },
   "k8s_wrong_namespace": {
     "success": false,
@@ -19,6 +19,6 @@
     "tool_name": "airflow_trigger_training_dag",
     "data": null,
     "error": "SAFETY REJECTION: Workflow execution rejected. Airflow DAG triggers mutate system state and require explicit user confirmation (user_confirmed=True).",
-    "duration_ms": 0.0004999983502784744
+    "duration_ms": 0.00039999940781854093
   }
 }

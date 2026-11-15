@@ -39,9 +39,9 @@ Demonstrate that corrupting the training dataset triggers pipeline validation fa
   > ValueError: Dataset validation failed: Maximum null ratio 40.75% exceeds limit 5.00%. Offending columns: {'tenure_months': 0.395, 'monthly_charges': 0.37, 'total_charges': 0.4075}
   > ```
 - **Known Facts:**
-  - `Latest Airflow pipeline run 'manual__2026-11-15T16:45:12.133883+00:00' finished with state 'failed'.`
-  - `Airflow task 'validate_dataset' failed during execution of pipeline run 'manual__2026-11-15T16:45:12.133883+00:00'.`
-  - `Downstream Airflow tasks ['preprocess_data', 'train_model', 'evaluate_and_log_mlflow', 'apply_model_quality_gate'] were aborted due to upstream failure.`
+  - `Latest Airflow pipeline run 'manual__2026-11-15T17:04:20.261698+00:00' finished with state 'failed'.`
+  - `Airflow task 'validate_dataset' failed during execution of pipeline run 'manual__2026-11-15T17:04:20.261698+00:00'.`
+  - `Downstream tasks skipped due to upstream failure: preprocess_data, train_model, evaluate_and_log_mlflow, apply_model_quality_gate.`
 - **Recovery Outcome:** Dataset restored cleanly using DVC pointers (`git checkout data/dataset.csv.dvc && dvc checkout -f`).
 
 ![Airflow 3 TaskFlow Pipeline Execution](../screenshots/airflow_dag.png)

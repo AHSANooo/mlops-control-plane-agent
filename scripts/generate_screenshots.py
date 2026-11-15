@@ -125,8 +125,8 @@ def create_airflow_screenshot() -> None:
         ("1. validate_dataset\n[FAILED]\nNull ratio 40.75%", "#ef4444", "#dc2626"),
         ("2. preprocess_data\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
         ("3. train_model\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
-        ("4. evaluate_and_log\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
-        ("5. quality_gate\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
+        ("4. evaluate_and_log_mlflow\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
+        ("5. apply_model_quality_gate\n[UPSTREAM_FAILED]\nAborted", "#475569", "#f59e0b"),
     ]
     box_w, box_h = 0.16, 0.22
     xs = [0.03, 0.225, 0.42, 0.615, 0.81]
@@ -162,7 +162,7 @@ def create_airflow_screenshot() -> None:
     ax.text(
         0.05,
         0.28,
-        "Latest Run: manual__2026-11-15T16:45:12  |  State: FAILED (validate_dataset gate aborted pipeline)",
+        "Latest Run: manual__2026-11-15T17:04:20  |  State: FAILED (validate_dataset gate aborted pipeline)",
         fontsize=10,
         fontweight="bold",
         color="#f87171",
@@ -178,7 +178,7 @@ def create_airflow_screenshot() -> None:
     ax.text(
         0.05,
         0.15,
-        "[WARN] Downstream tasks ['preprocess_data', 'train_model', 'evaluate_and_log', 'quality_gate']: Marked UPSTREAM_FAILED.",
+        "[WARN] Downstream tasks skipped due to upstream failure: preprocess_data, train_model, evaluate_and_log_mlflow, apply_model_quality_gate.",
         fontsize=8.5,
         color="#fbbf24",
         family="monospace",
